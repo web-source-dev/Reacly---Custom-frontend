@@ -37,6 +37,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { useNavigate } from 'react-router-dom';
+import MeetingAdminView from './MeetingAdminView';
 
 const AdminDashboard = () => {
   const [vendors, setVendors] = useState([]);
@@ -949,6 +950,7 @@ const AdminDashboard = () => {
         <Tabs value={activeTab} onChange={handleTabChange}>
           <Tab label="Vendors" sx={{ color: '#fff' }} />
           <Tab label="Buyers" sx={{ color: '#fff' }} />
+          <Tab label="Meetings" sx={{ color: '#fff' }} /> 
         </Tabs>
       </Box>
 
@@ -1128,6 +1130,27 @@ const AdminDashboard = () => {
           </Grid>
         </Grid>
       )}
+
+      {activeTab === 2 && (
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Card sx={{
+              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.1), rgba(121, 121, 121, 0.05))',
+              border: '1px solid rgba(25, 118, 210, 0.2)',
+              borderRadius: 2,
+            }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom sx={{ color: '#fff' }}>
+                  Meetings Overview
+                </Typography>
+                <MeetingAdminView />
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
+
 
       {dialogType === 'addLeads' ? renderAddLeadsDialog() : renderDetailsDialog()}
       {buyerDialogopen === true && renderBuyerDialog()}

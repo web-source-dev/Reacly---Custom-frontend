@@ -19,12 +19,104 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText
 } from '@mui/material';
-import { Check as CheckIcon, Close as CloseIcon, Business as BusinessIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
+import { Check as CheckIcon, Close as CloseIcon, Business as BusinessIcon, FileDownload as FileDownloadIcon, Schedule as ScheduleIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 import { useNavigate } from "react-router-dom";
+const MeetingDialog = ({ open, onClose, onSchedule, buyerName }) => {
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = () => {
+    onSchedule({ date, time, message });
+    setDate('');
+    setTime('');
+    setMessage('');
+    onClose();
+  };
+
+  return (
+<Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth 
+  sx={{ backgroundColor: 'rgba(0, 0, 0, 0.18)' }}>
+  <Box sx={{ backgroundColor: '#000', color: '#fff', padding: 2 }}>
+    <DialogTitle sx={{ color: '#fff', fontWeight: 'bold' }}>
+      Schedule Meeting with {buyerName}
+    </DialogTitle>
+    <DialogContent>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+        <TextField
+          label="Date"
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          fullWidth
+          sx={{
+            backgroundColor: '#121212',
+            borderRadius: 1,
+            input: { color: '#fff' },
+            label: { color: '#aaa' }
+          }}
+        />
+        <TextField
+          label="Time"
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+          InputLabelProps={{ shrink: true }}
+          fullWidth
+          sx={{
+            backgroundColor: '#121212',
+            borderRadius: 1,
+            input: { color: '#fff' },
+            label: { color: '#aaa' }
+          }}
+        />
+       <TextField
+  label="Message"
+  multiline
+  rows={4}
+  value={message}
+  onChange={(e) => setMessage(e.target.value)}
+  fullWidth
+  sx={{
+    backgroundColor: '#121212',
+    borderRadius: 1,
+    '& .MuiOutlinedInput-input': {
+      color: '#fff', // Ensures input text is white
+    },
+    '& .MuiInputLabel-root': {
+      color: 'rgba(255, 255, 255, 0.7)',
+    },
+    '& .MuiInputLabel-root.Mui-focused': {
+      color: '#fff',
+    },
+  }}
+/>
+
+      </Box>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose} sx={{ color: '#aaa' }}>Cancel</Button>
+      <Button onClick={handleSubmit} variant="contained" 
+        sx={{ backgroundColor: '#1E88E5', color: '#fff', '&:hover': { backgroundColor: '#1565C0' } }}>
+        Schedule Meeting
+      </Button>
+    </DialogActions>
+  </Box>
+</Dialog>
+
+  );
+};
+
 const VendorDashboard = () => {
   const theme = useTheme();
   const [vendorData, setVendorData] = useState(null);
@@ -33,6 +125,7 @@ const VendorDashboard = () => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState(0);
   const [remainingLeads, setRemainingLeads] = useState(0);
+  const [meetings, setMeetings] = useState([]);
   const [filters, setFilters] = useState({
     month: '',
     searchQuery: '',
@@ -40,7 +133,10 @@ const VendorDashboard = () => {
     service: ''
   });
   const navigate = useNavigate();
-    useEffect(() => {
+  const [meetingDialogOpen, setMeetingDialogOpen] = useState(false);
+  const [selectedBuyer, setSelectedBuyer] = useState(null);
+
+  useEffect(() => {
     const role = localStorage.getItem("role");
     if (role !== 'vendor'){
       navigate("/login");
@@ -54,12 +150,21 @@ const VendorDashboard = () => {
   useEffect(() => {
     if (vendorData) {
       setRemainingLeads(vendorData.leads || 0);
+      fetchMeetings();
     }
   }, [vendorData]);
 
+  const fetchMeetings = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/meeting/vendor/${vendorData._id}`);
+      setMeetings(response.data);
+    } catch (error) {
+      console.error('Error fetching meetings:', error);
+    }
+  };
+
   const fetchVendorData = async () => {
     try {
-      // Get the vendor's email from localStorage or context
       const email = localStorage.getItem('userEmail');
       if (!email) {
         setError('User email not found');
@@ -151,6 +256,25 @@ const VendorDashboard = () => {
     link.href = URL.createObjectURL(blob);
     link.download = `matched_buyers_${activeTab}_${new Date().toLocaleDateString()}.csv`;
     link.click();
+  };
+
+  const handleScheduleMeeting = async (meetingDetails) => {
+    try {
+      const email = localStorage.getItem('userEmail');
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/meeting/schedule`, {
+        vendorId: vendorData._id,
+        buyerId: selectedBuyer._id,
+        date: meetingDetails.date,
+        time: meetingDetails.time,
+        message: meetingDetails.message
+      });
+
+      // Refresh meetings data after scheduling
+      fetchMeetings();
+      setMeetingDialogOpen(false);
+    } catch (error) {
+      console.error('Error scheduling meeting:', error);
+    }
   };
 
   const FilterControls = () => (
@@ -397,7 +521,6 @@ const VendorDashboard = () => {
               <Grid container spacing={3}>
                 {filterBuyers(filterBuyersByStatus(activeTab === 0 ? 'new' : activeTab === 1 ? 'accepted' : 'rejected')).map((matchData) => {
                   const buyer = matchData.buyer;
-                  console.log("matchData", matchData)
                   const matchStatus = vendorData.matchedBuyers?.find(
                     (mb) => mb.buyerEmail === buyer.email
                   )?.status;
@@ -438,9 +561,44 @@ const VendorDashboard = () => {
                               <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
                                 {`${buyer.firstName} ${buyer.lastName}`}
                               </Typography>
-                              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 1 }}>
-                                {buyer.email}
-                              </Typography>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                  {buyer.email}
+                                </Typography>
+                                <Button
+                                  variant="outlined"
+                                  onClick={() => {
+                                    setSelectedBuyer(buyer);
+                                    setMeetingDialogOpen(true);
+                                  }}
+                                  disabled={meetings.some(meeting => 
+                                    meeting.buyerId._id === buyer._id && 
+                                    meeting.status === 'scheduled'
+                                  )}
+                                  sx={{
+                                    position: 'absolute',
+                                    right: 5,
+                                    top: 5,
+                                    fontSize: '10px',
+                                    padding: '5px',
+                                    color: '#fff',
+                                    borderColor: 'rgba(255, 255, 255, 0.23)',
+                                    '&:hover': {
+                                      borderColor: '#fff',
+                                      backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                                    },
+                                    '&.Mui-disabled': {
+                                      backgroundColor: 'rgba(5, 145, 47, 0.35)',
+                                      color: 'rgb(255, 255, 255)'
+                                    }
+                                  }}
+                                >
+                                  {meetings.some(meeting => 
+                                    meeting.buyerId._id === buyer._id && 
+                                    meeting.status === 'scheduled'
+                                  ) ? 'scheduled' : 'Schedule Meeting'}
+                                </Button>
+                              </Box>
                               <Typography variant="subtitle2" sx={{ color: '#fff', mb: 1 }}>
                                 Company Size: {buyer.companySize}
                               </Typography>
@@ -621,6 +779,12 @@ const VendorDashboard = () => {
           </Card>
         </Grid>
       </Grid>
+      <MeetingDialog
+        open={meetingDialogOpen}
+        onClose={() => setMeetingDialogOpen(false)}
+        onSchedule={handleScheduleMeeting}
+        buyerName={selectedBuyer?.companyName}
+      />
     </Container>
   );
 };
