@@ -183,7 +183,7 @@ const BuyerForm = () => {
         if (response.status >= 200 && response.status < 300) {
           setTimeout(() => {
             setSuccess('');
-            window.top.location.href = "https://www.reachly.ca/buyer-dashboard";
+            window.top.location.href = "https://www.reachly.ca/buyer-portal";
           }, 3000);
           console.log("Form submitted successfully:", response.data);
           setFormData({
