@@ -30,6 +30,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import axios from 'axios';
+import {useNavigate} from 'react-router-dom'
 
 const BuyerDashboard = () => {
   const theme = useTheme();
@@ -45,6 +46,12 @@ const BuyerDashboard = () => {
     budget: '',
     isActive: true
   });
+    const navigate = useNavigate()
+  useEffect(() => {
+    const role = localStorage.getItem("role");
+    if (role !== 'buyer') {
+      navigate("/login");
+    }
   const [allServicesDialogOpen, setAllServicesDialogOpen] = useState(false);
   const [services, setServices] = useState([]);
   const [newService, setNewService] = useState({
