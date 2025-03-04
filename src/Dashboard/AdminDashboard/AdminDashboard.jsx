@@ -36,6 +36,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [vendors, setVendors] = useState([]);
@@ -54,6 +55,14 @@ const AdminDashboard = () => {
   const [allIndustries, setAllIndustries] = useState([]);
   const [allServices, setAllServices] = useState([]);
 
+  const navigate = useNavigate()
+  useEffect(() => {
+    const role = localStorage.getItem("role");
+    if (role !== 'admin') {
+      navigate("/login");
+    }
+  }, [navigate]);
+  
   useEffect(() => {
     fetchData();
   }, []);
