@@ -18,13 +18,19 @@ import {
   Button,
   TextField,
   MenuItem,
+  Autocomplete,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import BusinessIcon from '@mui/icons-material/Business';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 import axios from 'axios';
+
 const BuyerDashboard = () => {
   const theme = useTheme();
   const [buyerData, setBuyerData] = useState(null);
@@ -46,6 +52,11 @@ const BuyerDashboard = () => {
     timeframe: '',
     budget: '',
     isActive: true
+  });
+  const [filters, setFilters] = useState({
+    month: '',
+    industry: '',
+    service: ''
   });
 
   useEffect(() => {
@@ -164,6 +175,79 @@ const BuyerDashboard = () => {
       setLoading(false);
     }
   };
+
+  const filterVendors = (vendors) => {
+    if (!vendors) return [];
+    
+    return vendors.filter(vendor => {
+      if (!vendor || !vendor.vendor) return false;
+
+      const matchesMonth = !filters.month || 
+        new Date(vendor.vendor.createdAt).getMonth() === parseInt(filters.month);
+
+      const matchesIndustry = !filters.industry || 
+        vendor.vendor.selectedIndustries.includes(filters.industry);
+
+      const matchesService = !filters.service || 
+        vendor.vendor.selectedServices.includes(filters.service);
+
+      return matchesMonth && matchesIndustry && matchesService;
+    });
+  };
+
+  const exportToCSV = () => {
+    const csvData = filterVendors(matchedVendors).map(vendor => ({
+      'Company Name': vendor.vendor.companyName,
+      'Contact Person': `${vendor.vendor.firstName} ${vendor.vendor.lastName}`,
+      'Email': vendor.vendor.email,
+      'Phone': vendor.vendor.phone,
+      'Industries': vendor.vendor.selectedIndustries.join(', '),
+      'Services': vendor.vendor.selectedServices.join(', '),
+      'Match Date': new Date(vendor.vendor.createdAt).toLocaleDateString()
+    }));
+
+    const headers = Object.keys(csvData[0]);
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `matched_vendors_${new Date().toLocaleDateString()}.csv`;
+    link.click();
+  };
+
+  const FilterControls = () => (
+    <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(255, 255, 255, 0.05)', borderRadius: 2 }}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} md={4} sx={{ marginLeft: 'auto' }}>
+          <FormControl fullWidth>
+            <InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Month</InputLabel>
+            <Select
+              value={filters.month}
+              label="Month"
+              onChange={(e) => setFilters(prev => ({ ...prev, month: e.target.value }))}
+              sx={{
+                color: '#fff',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255, 255, 255, 0.23)'
+                }
+              }}
+            >
+              <MenuItem value="">All Months</MenuItem>
+              {Array.from({ length: 12 }, (_, i) => (
+                <MenuItem key={i} value={i}>
+                  {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+      </Grid>
+    </Box>
+  );
 
   if (loading) return <Typography sx={{ color: '#fff' }}>Loading...</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;
@@ -343,11 +427,25 @@ const BuyerDashboard = () => {
             borderRadius: 2
           }}>
             <CardContent>
-              <Typography variant="h4" sx={{ color: '#fff', fontWeight: 600, mb: 3 }}>
-                Matched Vendors
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h4" sx={{ color: '#fff', fontWeight: 600 }}>
+                  Matched Vendors
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<FileDownloadIcon />}
+                  onClick={exportToCSV}
+                  sx={{
+                    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                    color: 'white'
+                  }}
+                >
+                  Export CSV
+                </Button>
+              </Box>
+              <FilterControls />
               <Grid container spacing={3}>
-                {matchedVendors.map((matchData) => (
+                {filterVendors(matchedVendors).map((matchData) => (
                   <Grid item xs={12} md={6} lg={4} key={matchData.vendor._id}>
                     <Card sx={{
                       background: 'linear-gradient(to right bottom, rgba(26, 26, 26, 0.8), rgba(45, 45, 45, 0.8))',

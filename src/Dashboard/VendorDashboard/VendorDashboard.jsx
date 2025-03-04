@@ -13,9 +13,15 @@ import {
   useTheme,
   Avatar,
   IconButton,
-  Tooltip
+  Tooltip,
+  TextField,
+  Autocomplete,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
-import { Check as CheckIcon, Close as CloseIcon, Business as BusinessIcon } from '@mui/icons-material';
+import { Check as CheckIcon, Close as CloseIcon, Business as BusinessIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 const VendorDashboard = () => {
@@ -26,6 +32,12 @@ const VendorDashboard = () => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState(0);
   const [remainingLeads, setRemainingLeads] = useState(0);
+  const [filters, setFilters] = useState({
+    month: '',
+    searchQuery: '',
+    industry: '',
+    service: ''
+  });
 
   useEffect(() => {
     fetchVendorData();
@@ -86,6 +98,125 @@ const VendorDashboard = () => {
       return status === 'new' ? !matchStatus : matchStatus === status;
     });
   };
+
+  const filterBuyers = (buyers) => {
+    return buyers.filter(matchData => {
+      const buyer = matchData.buyer;
+      const name = `${buyer.firstName} ${buyer.lastName}`.toLowerCase();
+      const company = buyer.companyName.toLowerCase();
+      const searchQuery = filters.searchQuery.toLowerCase();
+
+      const matchesSearch = !filters.searchQuery || 
+        name.includes(searchQuery) || 
+        company.includes(searchQuery);
+
+      const matchesIndustry = !filters.industry || 
+        buyer.industries.includes(filters.industry);
+
+      const matchesService = !filters.service || 
+        buyer.services.some(s => s.service === filters.service);
+
+      return matchesSearch && matchesIndustry && matchesService;
+    });
+  };
+
+  const exportToCSV = () => {
+    const csvData = filterBuyers(filterBuyersByStatus(activeTab === 0 ? 'new' : activeTab === 1 ? 'accepted' : 'rejected')).map(matchData => ({
+      'Company Name': matchData.buyer.companyName,
+      'Contact Person': `${matchData.buyer.firstName} ${matchData.buyer.lastName}`,
+      'Email': matchData.buyer.email,
+      'Company Size': matchData.buyer.companySize,
+      'Industries': matchData.buyer.industries.join(', '),
+      'Services': matchData.buyer.services.map(s => s.service).join(', '),
+      'Status': activeTab === 0 ? 'New' : activeTab === 1 ? 'Accepted' : 'Rejected',
+      'Match Date': new Date(matchData.buyer.createdAt).toLocaleDateString()
+    }));
+
+    const headers = Object.keys(csvData[0]);
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `matched_buyers_${activeTab}_${new Date().toLocaleDateString()}.csv`;
+    link.click();
+  };
+
+  const FilterControls = () => (
+    <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(255, 255, 255, 0.05)', borderRadius: 2 }}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} md={4}>
+          <FormControl fullWidth>
+            <InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Month</InputLabel>
+            <Select
+              value={filters.month}
+              onChange={(e) => setFilters(prev => ({ ...prev, month: e.target.value }))}
+              sx={{
+                color: '#fff',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255, 255, 255, 0.23)'
+                }
+              }}
+            >
+              <MenuItem value="">All Months</MenuItem>
+              {Array.from({ length: 12 }, (_, i) => (
+                <MenuItem key={i} value={i}>
+                  {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Autocomplete
+            options={Array.from(new Set(matchedBuyers.flatMap(b => b.buyer.industries)))}
+            value={filters.industry}
+            onChange={(_, newValue) => setFilters(prev => ({ ...prev, industry: newValue }))}
+            renderInput={(params) => (
+              <TextField 
+                {...params} 
+                label="Filter by Industry"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#fff',
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                  },
+                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
+                }}
+              />
+            )}
+            disablePortal
+            blurOnSelect
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Autocomplete
+            options={Array.from(new Set(matchedBuyers.flatMap(b => b.buyer.services.map(s => s.service))))}
+            value={filters.service}
+            onChange={(_, newValue) => setFilters(prev => ({ ...prev, service: newValue }))}
+            renderInput={(params) => (
+              <TextField 
+                {...params} 
+                label="Filter by Service"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#fff',
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                  },
+                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
+                }}
+              />
+            )}
+            disablePortal
+            blurOnSelect
+          />
+        </Grid>
+      </Grid>
+    </Box>
+  );
 
   if (loading) return <Typography>Loading...</Typography>;
   if (error) return <Typography color="error">{error}</Typography>;
@@ -228,7 +359,7 @@ const VendorDashboard = () => {
             borderRadius: 2
           }}>
             <CardContent>
-              <Box sx={{ borderBottom: 1, borderColor: 'rgba(255, 255, 255, 0.1)', mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Tabs
                   value={activeTab}
                   onChange={handleTabChange}
@@ -242,9 +373,21 @@ const VendorDashboard = () => {
                   <Tab label="Accepted Buyers" />
                   <Tab label="Rejected Buyers" />
                 </Tabs>
+                <Button
+                  variant="contained"
+                  startIcon={<FileDownloadIcon />}
+                  onClick={exportToCSV}
+                  sx={{
+                    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                    color: 'white'
+                  }}
+                >
+                  Export CSV
+                </Button>
               </Box>
+              <FilterControls />
               <Grid container spacing={3}>
-                {filterBuyersByStatus(activeTab === 0 ? 'new' : activeTab === 1 ? 'accepted' : 'rejected').map((matchData) => {
+                {filterBuyers(filterBuyersByStatus(activeTab === 0 ? 'new' : activeTab === 1 ? 'accepted' : 'rejected')).map((matchData) => {
                   const buyer = matchData.buyer;
                   console.log("matchData", matchData)
                   const matchStatus = vendorData.matchedBuyers?.find(

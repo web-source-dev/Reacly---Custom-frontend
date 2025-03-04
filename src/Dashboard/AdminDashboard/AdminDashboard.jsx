@@ -23,12 +23,19 @@ import {
   TextField,
   IconButton,
   Tooltip,
-  Chip
+  Chip,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Autocomplete,
+  Switch
 } from '@mui/material';
 import axios from 'axios';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
 const AdminDashboard = () => {
   const [vendors, setVendors] = useState([]);
@@ -38,6 +45,14 @@ const AdminDashboard = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState('');
   const [leadsToAdd, setLeadsToAdd] = useState('');
+  const [filters, setFilters] = useState({
+    searchQuery: '',
+    month: '',
+    industry: '',
+    service: ''
+  });
+  const [allIndustries, setAllIndustries] = useState([]);
+  const [allServices, setAllServices] = useState([]);
 
   useEffect(() => {
     fetchData();
@@ -49,14 +64,14 @@ const AdminDashboard = () => {
         axios.get(`${process.env.REACT_APP_BACKEND_URL}/lead/getAllVendors`),
         axios.get(`${process.env.REACT_APP_BACKEND_URL}/lead/getAllBuyers`)
       ]);
-    
+
       if (vendorsResponse.data.vendors) {
         setVendors(vendorsResponse.data.vendors.map(vendor => {
           const matchedBuyers = vendor.matchedBuyers || [];
           const acceptedBuyers = matchedBuyers.filter(mb => mb.status === 'accepted').length;
           const rejectedBuyers = matchedBuyers.filter(mb => mb.status === 'rejected').length;
           const pendingBuyers = matchedBuyers.filter(mb => !mb.status || mb.status === 'pending').length;
-    
+
           return {
             ...vendor,
             matchedBuyers,
@@ -70,7 +85,7 @@ const AdminDashboard = () => {
           };
         }));
       }
-    
+
       if (buyersResponse.data.buyers) {
         setBuyers(buyersResponse.data.buyers);
       }
@@ -88,10 +103,10 @@ const AdminDashboard = () => {
     setSelectedItem(item);
     setDialogOpen(true);
   };
-  const [buyerDialog,setBuyerDialog] = useState('')
-  const [buyerData,setBuyerData] = useState()
-  const [buyerDialogopen,setBuyerDialogOpen] = useState('false')
-  const handleBuyerDialog = (type,item) => {
+  const [buyerDialog, setBuyerDialog] = useState('')
+  const [buyerData, setBuyerData] = useState()
+  const [buyerDialogopen, setBuyerDialogOpen] = useState('false')
+  const handleBuyerDialog = (type, item) => {
     setBuyerDialog(type)
     setBuyerData(item)
     setBuyerDialogOpen(true)
@@ -102,25 +117,22 @@ const AdminDashboard = () => {
     setSelectedItem(null);
     setLeadsToAdd('');
     setBuyerDialogOpen(false);
-
-
-
   };
 
   const renderBuyerDialog = () => {
     if (!buyerData) return null;
 
-    const data = buyerData;
-    const matchedVendors = data.matchedVendors || [];
+    const data = buyerData.buyer;
+    const matchedVendors = buyerData.matchedVendors || [];
     const acceptedVendors = matchedVendors.filter(v => v.status === 'accepted');
     const rejectedVendors = matchedVendors.filter(v => v.status === 'rejected');
     const pendingVendors = matchedVendors.filter(v => !v.status || v.status === 'pending');
 
     return (
-      <Dialog 
-        open={buyerDialogopen} 
-        onClose={handleCloseDialog} 
-        maxWidth="lg" 
+      <Dialog
+        open={buyerDialogopen}
+        onClose={handleCloseDialog}
+        maxWidth="lg"
         fullWidth
         PaperProps={{
           sx: {
@@ -145,29 +157,31 @@ const AdminDashboard = () => {
             <Typography variant="h6" gutterBottom>
               Company Information
             </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <Typography><strong>Company Name:</strong> {data.companyName}</Typography>
-                <Typography><strong>Contact:</strong> {`${data.firstName} ${data.lastName}`}</Typography>
-                <Typography><strong>Email:</strong> {data.email}</Typography>
-                <Typography><strong>Website:</strong> {data.companyWebsite}</Typography>
-                <Typography><strong>Company Size:</strong> {data.companySize}</Typography>
+            <Paper spacing={3} sx={{ background: '#444', mt: 2, color: '#fff', p: 2 }} >
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography><strong>Company Name:</strong> {data.companyName}</Typography>
+                  <Typography><strong>Contact:</strong> {`${data.firstName} ${data.lastName}`}</Typography>
+                  <Typography><strong>Email:</strong> {data.email}</Typography>
+                  <Typography><strong>Website:</strong> {data.companyWebsite}</Typography>
+                  <Typography><strong>Company Size:</strong> {data.companySize}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography><strong>Industries:</strong></Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                    {data.industries.map((industry) => (
+                      <Chip key={industry} label={industry} size="small" color='secondary' />
+                    ))}
+                  </Box>
+                  <Typography><strong>Services:</strong></Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {data.services.map((service) => (
+                      <Chip key={service.service} label={service.service} size="small" color='primary' />
+                    ))}
+                  </Box>
+                </Grid>
               </Grid>
-              <Grid item xs={6}>
-                <Typography><strong>Industries:</strong></Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                  {data.industries.map((industry) => (
-                    <Chip key={industry} label={industry} size="small" color='secondary' />
-                  ))}
-                </Box>
-                <Typography><strong>Services:</strong></Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {data.services.map((service) => (
-                    <Chip key={service.service} label={service.service} size="small" color='primary' />
-                  ))}
-                </Box>
-              </Grid>
-            </Grid>
+            </Paper>
 
             <Box sx={{ mt: 3 }}>
               <Typography variant="h6" gutterBottom>
@@ -175,10 +189,10 @@ const AdminDashboard = () => {
               </Typography>
               <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid item xs={12} md={6}>
-                  <Paper sx={{ 
-                    p: 3, 
+                  <Paper sx={{
+                    p: 3,
                     height: '100%',
-                    background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05))',
+                    background: 'linear-gradient(135deg, rgba(75, 95, 75, 0.1), rgba(92, 92, 92, 0.05))',
                     border: '1px solid rgba(76, 175, 80, 0.2)',
                     borderRadius: 2
                   }}>
@@ -186,49 +200,49 @@ const AdminDashboard = () => {
                       Vendor Status
                     </Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
                         justifyContent: 'space-between',
                         p: 1.5,
                         bgcolor: 'rgba(76, 175, 80, 0.1)',
                         borderRadius: 1
                       }}>
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Accepted Vendors</Typography>
-                        <Chip 
-                          size="medium" 
-                          label={acceptedVendors.length} 
+                        <Typography sx={{ color: 'rgb(255, 255, 255)' }}>Accepted Vendors</Typography>
+                        <Chip
+                          size="medium"
+                          label={acceptedVendors.length}
                           color="success"
                           sx={{ minWidth: 60 }}
                         />
                       </Box>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
                         justifyContent: 'space-between',
                         p: 1.5,
                         bgcolor: 'rgba(244, 67, 54, 0.1)',
                         borderRadius: 1
                       }}>
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Rejected Vendors</Typography>
-                        <Chip 
-                          size="medium" 
-                          label={rejectedVendors.length} 
+                        <Typography sx={{ color: 'rgb(255, 255, 255)' }}>Rejected Vendors</Typography>
+                        <Chip
+                          size="medium"
+                          label={rejectedVendors.length}
                           color="error"
                           sx={{ minWidth: 60 }}
                         />
                       </Box>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
                         justifyContent: 'space-between',
                         p: 1.5,
                         bgcolor: 'rgba(255, 255, 255, 0.05)',
                         borderRadius: 1
                       }}>
-                        <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Pending Vendors</Typography>
-                        <Chip 
-                          size="medium" 
+                        <Typography sx={{ color: 'rgb(255, 255, 255)' }}>Pending Vendors</Typography>
+                        <Chip
+                          size="medium"
                           label={pendingVendors.length}
                           sx={{ minWidth: 60, bgcolor: 'rgba(255, 255, 255, 0.1)' }}
                         />
@@ -238,19 +252,23 @@ const AdminDashboard = () => {
                 </Grid>
               </Grid>
 
-              <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+              <Typography variant="h6" sx={{ mt: 8, mb: 2 }}>
                 Matched Vendors Details
               </Typography>
-              <TableContainer component={Paper}>
+              <TableContainer component={Paper} sx={{
+                background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.1), rgba(121, 121, 121, 0.05))',
+                border: '1px solid rgba(25, 118, 210, 0.2)',
+                borderRadius: 2,
+              }}>
                 <Table size="medium">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Company Name</TableCell>
-                      <TableCell>Contact Person</TableCell>
-                      <TableCell>Email</TableCell>
-                      <TableCell>Matched Industries</TableCell>
-                      <TableCell>Matched Services</TableCell>
-                      <TableCell>Status</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Company Name</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Contact Person</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Email</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Matched Industries</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Matched Services</TableCell>
+                      <TableCell sx={{ color: '#fff' }}>Status</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -265,22 +283,22 @@ const AdminDashboard = () => {
 
                       return (
                         <TableRow key={index}>
-                          <TableCell>
+                          <TableCell sx={{ color: '#fff' }}>
                             <Typography variant="body2">
                               {match.vendor?.companyName || 'N/A'}
                             </Typography>
                           </TableCell>
-                          <TableCell>
+                          <TableCell sx={{ color: '#fff' }}>
                             <Typography variant="body2">
                               {`${match.vendor?.firstName} ${match.vendor?.lastName}` || 'N/A'}
                             </Typography>
                           </TableCell>
-                          <TableCell>
+                          <TableCell sx={{ color: '#fff' }}>
                             <Typography variant="body2">
                               {match.vendor?.email}
                             </Typography>
                           </TableCell>
-                          <TableCell>
+                          <TableCell sx={{ color: '#fff' }}>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                               {matchedIndustries.map((industry, i) => (
                                 <Chip
@@ -288,12 +306,11 @@ const AdminDashboard = () => {
                                   label={industry}
                                   size="small"
                                   color="primary"
-                                  variant="outlined"
                                 />
                               ))}
                             </Box>
                           </TableCell>
-                          <TableCell>
+                          <TableCell sx={{ color: '#fff' }}>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                               {matchedServices.map((service, i) => (
                                 <Chip
@@ -301,19 +318,18 @@ const AdminDashboard = () => {
                                   label={service}
                                   size="small"
                                   color="secondary"
-                                  variant="outlined"
                                 />
                               ))}
                             </Box>
                           </TableCell>
-                          <TableCell>
+                          <TableCell sx={{ color: '#fff' }}>
                             <Chip
                               size="small"
                               label={match.status || 'Pending'}
                               color={
                                 match.status === 'accepted' ? 'success'
-                                : match.status === 'rejected' ? 'error'
-                                : 'default'
+                                  : match.status === 'rejected' ? 'error'
+                                    : 'default'
                               }
                               sx={{ minWidth: 80 }}
                             />
@@ -345,10 +361,24 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleToggleActivation = async (email) => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/toggle-activation/${email}`);
+      
+      if (response.data) {
+        // Refresh the data to show updated activation status
+        await fetchData();
+      }
+    } catch (error) {
+      console.error('Error toggling activation:', error);
+      // You might want to show an error message to the user here
+    }
+  };
+  
   const renderDetailsDialog = () => {
     if (!selectedItem) return null;
 
-    console.log('selected vendor',selectedItem)
+    console.log('selected vendor', selectedItem)
 
     const isVendor = dialogType === 'vendor';
     const data = isVendor ? selectedItem.vendor : selectedItem;
@@ -363,12 +393,12 @@ const AdminDashboard = () => {
     const totalLeads = data.leads || 0;
     const usedLeads = acceptedBuyers.length;
     const leadUsageRate = totalLeads === 0 || usedLeads >= totalLeads ? 100 : ((usedLeads / totalLeads) * 100).toFixed(1);
-  
+
     return (
-      <Dialog 
-        open={dialogOpen} 
-        onClose={handleCloseDialog} 
-        maxWidth="lg" 
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="lg"
         fullWidth
         PaperProps={{
           sx: {
@@ -402,35 +432,35 @@ const AdminDashboard = () => {
             <Typography variant="h6" gutterBottom>
               Company Information
             </Typography>
-          <Paper spacing={3} sx={{background:'#444' ,mt:2,color:'#fff', p:2}} >
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <Typography><strong>Company Name:</strong> {data.companyName}</Typography>
-                <Typography><strong>Contact:</strong> {`${data.firstName} ${data.lastName}`}</Typography>
-                <Typography><strong>Email:</strong> {data.email}</Typography>
-                {isVendor && (
-                  <Typography><strong>Phone:</strong> {data.phone}</Typography>
-                )}
-                <Typography><strong>Website:</strong> {data.companyWebsite}</Typography>
-                {!isVendor && (
-                  <Typography><strong>Company Size:</strong> {data.companySize}</Typography>
-                )}
+            <Paper spacing={3} sx={{ background: '#444', mt: 2, color: '#fff', p: 2 }} >
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography><strong>Company Name:</strong> {data.companyName}</Typography>
+                  <Typography><strong>Contact:</strong> {`${data.firstName} ${data.lastName}`}</Typography>
+                  <Typography><strong>Email:</strong> {data.email}</Typography>
+                  {isVendor && (
+                    <Typography><strong>Phone:</strong> {data.phone}</Typography>
+                  )}
+                  <Typography><strong>Website:</strong> {data.companyWebsite}</Typography>
+                  {!isVendor && (
+                    <Typography><strong>Company Size:</strong> {data.companySize}</Typography>
+                  )}
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography><strong>Industries:</strong></Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                    {(isVendor ? data.selectedIndustries : data.industries).map((industry) => (
+                      <Chip key={industry} label={industry} size="small" color='secondary' />
+                    ))}
+                  </Box>
+                  <Typography><strong>Services:</strong></Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {(isVendor ? data.selectedServices : data.services.map(s => s.service)).map((service) => (
+                      <Chip key={service} label={service} size="small" color='primary' />
+                    ))}
+                  </Box>
+                </Grid>
               </Grid>
-              <Grid item xs={6}>
-                <Typography><strong>Industries:</strong></Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                  {(isVendor ? data.selectedIndustries : data.industries).map((industry) => (
-                    <Chip key={industry} label={industry} size="small" color='secondary' />
-                  ))}
-                </Box>
-                <Typography><strong>Services:</strong></Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {(isVendor ? data.selectedServices : data.services.map(s => s.service)).map((service) => (
-                    <Chip key={service} label={service} size="small" color='primary' />
-                  ))}
-                </Box>
-              </Grid>
-            </Grid>
             </Paper>
 
             {isVendor && (
@@ -440,8 +470,8 @@ const AdminDashboard = () => {
                 </Typography>
                 <Grid container spacing={2} sx={{ mb: 3 }}>
                   <Grid item xs={12} md={6}>
-                    <Paper sx={{ 
-                      p: 3, 
+                    <Paper sx={{
+                      p: 3,
                       height: '100%',
                       background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.1), rgba(121, 121, 121, 0.05))',
                       border: '1px solid rgba(25, 118, 210, 0.2)',
@@ -453,28 +483,28 @@ const AdminDashboard = () => {
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <Typography sx={{ color: 'rgb(255, 255, 255)' }}>Available Leads</Typography>
-                          <Typography variant="h6">{totalLeads}</Typography>
+                          <Typography variant="h6" color='primary'>{totalLeads}</Typography>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <Typography sx={{ color: 'rgb(255, 255, 255)' }}>Used Leads</Typography>
-                          <Typography variant="h6">{usedLeads}</Typography>
+                          <Typography variant="h6" color='primary'>{usedLeads}</Typography>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Total Matched Buyers</Typography>
-                          <Typography variant="h6">{matchedBuyers.length}</Typography>
+                          <Typography sx={{ color: 'rgb(255, 255, 255)' }}>Total Matched Buyers</Typography>
+                          <Typography variant="h6" color='primary'>{matchedBuyers.length}</Typography>
                         </Box>
-                        <Box sx={{ 
+                        <Box sx={{
                           mt: 1,
                           pt: 2,
                           borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                          display: 'flex', 
-                          alignItems: 'center', 
+                          display: 'flex',
+                          alignItems: 'center',
                           justifyContent: 'space-between'
                         }}>
-                          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Lead Usage Rate</Typography>
-                          <Typography 
-                            variant="h6" 
-                            sx={{ 
+                          <Typography sx={{ color: 'rgb(255, 255, 255)' }}>Lead Usage Rate</Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{
                               color: leadUsageRate > 80 ? '#ff5252' : leadUsageRate > 50 ? '#ffab40' : '#69f0ae'
                             }}
                           >
@@ -485,10 +515,10 @@ const AdminDashboard = () => {
                     </Paper>
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <Paper sx={{ 
-                      p: 3, 
+                    <Paper sx={{
+                      p: 3,
                       height: '100%',
-                      background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05))',
+                      background: 'linear-gradient(135deg, rgba(84, 100, 85, 0.1), rgba(99, 99, 99, 0.05))',
                       border: '1px solid rgba(76, 175, 80, 0.2)',
                       borderRadius: 2
                     }}>
@@ -496,49 +526,49 @@ const AdminDashboard = () => {
                         Buyer Status
                       </Typography>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
+                        <Box sx={{
+                          display: 'flex',
+                          alignItems: 'center',
                           justifyContent: 'space-between',
                           p: 1.5,
                           bgcolor: 'rgba(76, 175, 80, 0.1)',
                           borderRadius: 1
                         }}>
-                          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Accepted Buyers</Typography>
-                          <Chip 
-                            size="medium" 
-                            label={acceptedBuyers.length} 
+                          <Typography sx={{ color: 'rgb(255, 255, 255)' }}>Accepted Buyers</Typography>
+                          <Chip
+                            size="medium"
+                            label={acceptedBuyers.length}
                             color="success"
                             sx={{ minWidth: 60 }}
                           />
                         </Box>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
+                        <Box sx={{
+                          display: 'flex',
+                          alignItems: 'center',
                           justifyContent: 'space-between',
                           p: 1.5,
                           bgcolor: 'rgba(244, 67, 54, 0.1)',
                           borderRadius: 1
                         }}>
-                          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Rejected Buyers</Typography>
-                          <Chip 
-                            size="medium" 
-                            label={rejectedBuyers.length} 
+                          <Typography sx={{ color: 'rgb(255, 255, 255)' }}>Rejected Buyers</Typography>
+                          <Chip
+                            size="medium"
+                            label={rejectedBuyers.length}
                             color="error"
                             sx={{ minWidth: 60 }}
                           />
                         </Box>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
+                        <Box sx={{
+                          display: 'flex',
+                          alignItems: 'center',
                           justifyContent: 'space-between',
                           p: 1.5,
                           bgcolor: 'rgba(255, 255, 255, 0.05)',
                           borderRadius: 1
                         }}>
-                          <Typography sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Pending Buyers</Typography>
-                          <Chip 
-                            size="medium" 
+                          <Typography sx={{ color: 'rgb(255, 255, 255)' }}>Pending Buyers</Typography>
+                          <Chip
+                            size="medium"
                             label={pendingBuyers.length}
                             sx={{ minWidth: 60, bgcolor: 'rgba(255, 255, 255, 0.1)' }}
                           />
@@ -551,16 +581,20 @@ const AdminDashboard = () => {
                 <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
                   Matched Buyers Details
                 </Typography>
-                <TableContainer component={Paper}>
-                  <Table size="medium">
+                <TableContainer component={Paper} sx={{
+                  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.1), rgba(121, 121, 121, 0.05))',
+                  border: '1px solid rgba(25, 118, 210, 0.2)',
+                  borderRadius: 2,
+                }}>
+                  <Table size="medium" sx={{ border: '1px solid #fff' }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Company Name</TableCell>
-                        <TableCell>Contact Person</TableCell>
-                        <TableCell>Email</TableCell>
-                        <TableCell>Matched Industries</TableCell>
-                        <TableCell>Matched Services</TableCell>
-                        <TableCell>Status</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Company Name</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Contact Person</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Email</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Matched Industries</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Matched Services</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Status</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -577,22 +611,22 @@ const AdminDashboard = () => {
 
                         return (
                           <TableRow key={index}>
-                            <TableCell>
+                            <TableCell sx={{ color: '#fff' }}>
                               <Typography variant="body2">
                                 {match.companyName || 'N/A'}
                               </Typography>
                             </TableCell>
-                            <TableCell>
+                            <TableCell sx={{ color: '#fff' }}>
                               <Typography variant="body2">
                                 {match.buyerName || 'N/A'}
                               </Typography>
                             </TableCell>
-                            <TableCell>
+                            <TableCell sx={{ color: '#fff' }}>
                               <Typography variant="body2">
                                 {match.buyerEmail}
                               </Typography>
                             </TableCell>
-                            <TableCell>
+                            <TableCell sx={{ color: '#fff' }}>
                               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                 {matchedIndustries.map((industry, i) => (
                                   <Chip
@@ -600,12 +634,11 @@ const AdminDashboard = () => {
                                     label={industry}
                                     size="small"
                                     color="primary"
-                                    variant="outlined"
                                   />
                                 ))}
                               </Box>
                             </TableCell>
-                            <TableCell>
+                            <TableCell sx={{ color: '#fff' }}>
                               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                 {matchedServices.map((service, i) => (
                                   <Chip
@@ -613,21 +646,20 @@ const AdminDashboard = () => {
                                     label={service}
                                     size="small"
                                     color="secondary"
-                                    variant="outlined"
                                   />
                                 ))}
                               </Box>
                             </TableCell>
-                            <TableCell>
+                            <TableCell sx={{ color: '#fff' }}>
                               <Chip
                                 size="small"
                                 label={match.status || 'Pending'}
                                 color={
                                   match.status === 'accepted' ? 'success'
-                                  : match.status === 'rejected' ? 'error'
-                                  : 'default'
+                                    : match.status === 'rejected' ? 'error'
+                                      : 'default'
                                 }
-                                sx={{ minWidth: 80 }}
+                                sx={{ minWidth: 80, color: '#fff' }}
                               />
                             </TableCell>
                           </TableRow>
@@ -673,6 +705,166 @@ const AdminDashboard = () => {
         </DialogActions>
       </Dialog>
     );
+  };
+
+  const collectFiltersData = (vendors, buyers) => {
+    const industries = new Set();
+    const services = new Set();
+
+    vendors.forEach(vendor => {
+      vendor.vendor.selectedIndustries.forEach(industry => industries.add(industry));
+      vendor.vendor.selectedServices.forEach(service => services.add(service));
+    });
+
+    buyers.forEach(buyer => {
+      buyer.buyer.industries.forEach(industry => industries.add(industry));
+      buyer.buyer.services.forEach(service => services.add(service.service));
+    });
+
+    setAllIndustries(Array.from(industries));
+    setAllServices(Array.from(services));
+  };
+
+  const filterData = (data, type) => {
+    return data.filter(item => {
+      const itemData = type === 'vendor' ? item.vendor : item.buyer;
+      const name = `${itemData.firstName} ${itemData.lastName}`.toLowerCase();
+      const company = itemData.companyName.toLowerCase();
+      const searchQuery = filters.searchQuery.toLowerCase();
+
+      const matchesSearch = !filters.searchQuery ||
+        name.includes(searchQuery) ||
+        company.includes(searchQuery);
+
+      const matchesIndustry = !filters.industry ||
+        (type === 'vendor'
+          ? itemData.selectedIndustries.includes(filters.industry)
+          : itemData.industries.includes(filters.industry));
+
+      const matchesService = !filters.service ||
+        (type === 'vendor'
+          ? itemData.selectedServices.includes(filters.service)
+          : itemData.services.some(s => s.service === filters.service));
+
+      const matchesMonth = !filters.month ||
+        new Date(itemData.createdAt).getMonth() === parseInt(filters.month);
+
+      return matchesSearch && matchesIndustry && matchesService && matchesMonth;
+    });
+  };
+
+  const FilterControls = () => (
+    <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(255, 255, 255, 0.05)', borderRadius: 2 }}>
+      <Grid container spacing={2} alignItems="center" justifyContent="flex-end">
+        <Grid item xs={12} md={3}>
+          <FormControl fullWidth>
+            <InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Month</InputLabel>
+            <Select
+              value={filters.month}
+              onChange={(e) => setFilters(prev => ({ ...prev, month: e.target.value }))}
+              sx={{
+                color: '#fff',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: 'rgba(255, 255, 255, 0.23)'
+                }
+              }}
+            >
+              <MenuItem value="">All Months</MenuItem>
+              {Array.from({ length: 12 }, (_, i) => (
+                <MenuItem key={i} value={i}>
+                  {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Autocomplete
+            options={allIndustries}
+            value={filters.industry}
+            onChange={(_, newValue) => setFilters(prev => ({ ...prev, industry: newValue }))}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Filter by Industry"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#fff',
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                  },
+                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
+                }}
+              />
+            )}
+            sx={{
+              '& .MuiAutocomplete-input': { color: '#fff' }
+            }}
+            disablePortal
+            blurOnSelect
+          />
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Autocomplete
+            options={allServices}
+            value={filters.service}
+            onChange={(_, newValue) => setFilters(prev => ({ ...prev, service: newValue }))}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Filter by Service"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#fff',
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                  },
+                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
+                }}
+              />
+            )}
+            sx={{
+              '& .MuiAutocomplete-input': { color: '#fff' }
+            }}
+            disablePortal
+            blurOnSelect
+          />
+        </Grid>
+      </Grid>
+    </Box>
+  );
+
+  const exportToCSV = (data, type) => {
+    const csvData = data.map(item => {
+      const itemData = type === 'vendor' ? item.vendor : item.buyer;
+      return {
+        'Company Name': itemData.companyName,
+        'Contact Person': `${itemData.firstName} ${itemData.lastName}`,
+        'Email': itemData.email,
+        'Created Date': new Date(itemData.createdAt).toLocaleDateString(),
+        ...(type === 'vendor' ? {
+          'Available Leads': itemData.leads || 0,
+          'Matched Buyers': itemData.matchedBuyers?.length || 0,
+          'Industries': itemData.selectedIndustries.join(', '),
+          'Services': itemData.selectedServices.join(', ')
+        } : {
+          'Company Size': itemData.companySize,
+          'Industries': itemData.industries.join(', '),
+          'Services': itemData.services.map(s => s.service).join(', '),
+          'Matched Vendors': itemData.matchedVendors?.length || 0
+        })
+      };
+    });
+
+    const headers = Object.keys(csvData[0]);
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => headers.map(header => `"${row[header]}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${type}_data_${new Date().toLocaleDateString()}.csv`;
+    link.click();
   };
 
   return (
@@ -743,48 +935,63 @@ const AdminDashboard = () => {
         </Grid>
       </Grid>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ mb: 4 }}>
+        <FilterControls />
         <Tabs value={activeTab} onChange={handleTabChange}>
-          <Tab label="Vendors" />
-          <Tab label="Buyers" />
+          <Tab label="Vendors" sx={{ color: '#fff' }} />
+          <Tab label="Buyers" sx={{ color: '#fff' }} />
         </Tabs>
       </Box>
 
       {activeTab === 0 && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <Card>
+            <Card sx={{
+              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.1), rgba(121, 121, 121, 0.05))',
+              border: '1px solid rgba(25, 118, 210, 0.2)',
+              borderRadius: 2,
+            }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Vendors Overview
-                </Typography>
-                <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
-                  <Table sx={{
-                    '& .MuiTableCell-root': {
-                      borderColor: 'divider',
-                      py: 2
-                    },
-                    '& .MuiTableRow-root:hover': {
-                      backgroundColor: 'action.hover'
-                    }
-                  }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" gutterBottom sx={{ color: '#fff' }}>
+                    Vendors Overview
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<FileDownloadIcon />}
+                    onClick={() => exportToCSV(vendors, 'vendor')}
+                    sx={{
+                      background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                      color: 'white'
+                    }}
+                  >
+                    Export CSV
+                  </Button>
+                </Box>
+                <TableContainer component={Paper} sx={{
+                  borderRadius: 2, boxShadow: 3,
+                  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.1), rgba(121, 121, 121, 0.05))',
+                  border: '1px solid rgba(25, 118, 210, 0.2)',
+                  borderRadius: 2,
+                }}>
+                  <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Company Name</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Contact Person</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Available Leads</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Matched Buyers</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Company Name</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Contact Person</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Email</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Available Leads</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Matched Buyers</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Actions</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {vendors.map((vendorData) => (
+                      {filterData(vendors, 'vendor').map((vendorData) => (
                         <TableRow key={vendorData.vendor._id}>
-                          <TableCell>{vendorData.vendor.companyName}</TableCell>
-                          <TableCell>{`${vendorData.vendor.firstName} ${vendorData.vendor.lastName}`}</TableCell>
-                          <TableCell>{vendorData.vendor.email}</TableCell>
-                          <TableCell>
+                          <TableCell sx={{ color: '#fff' }}>{vendorData.vendor.companyName}</TableCell>
+                          <TableCell sx={{ color: '#fff' }}>{`${vendorData.vendor.firstName} ${vendorData.vendor.lastName}`}</TableCell>
+                          <TableCell sx={{ color: '#fff' }}>{vendorData.vendor.email}</TableCell>
+                          <TableCell sx={{ color: '#fff' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               {vendorData.vendor.leads || 0}
                               <Tooltip title="Add Leads">
@@ -792,30 +999,31 @@ const AdminDashboard = () => {
                                   size="small"
                                   onClick={() => handleOpenDialog('addLeads', vendorData)}
                                 >
-                                  <AddCircleIcon />
+                                  <AddCircleIcon sx={{ color: '#fff' }} />
                                 </IconButton>
                               </Tooltip>
                             </Box>
                           </TableCell>
-                          <TableCell>{vendorData.matchedBuyers.length}</TableCell>
-                          <TableCell>
+                          <TableCell sx={{ color: '#fff' }}>{vendorData.vendor.matchedBuyers?.length || 0}</TableCell>
+                          <TableCell sx={{ color: '#fff' }}>
                             <Box sx={{ display: 'flex', gap: 1 }}>
                               <Tooltip title="View Details">
                                 <IconButton
                                   size="small"
                                   onClick={() => handleOpenDialog('vendor', vendorData)}
                                 >
-                                  <VisibilityIcon />
+                                  <VisibilityIcon sx={{ color: '#fff' }} />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Edit Vendor">
-                                <IconButton
+                              <Tooltip title="Toggle Activation">
+                                <Switch
                                   size="small"
-                                  onClick={() => window.location.href = `/vendor-form/${vendorData.vendor.email}`}
-                                >
-                                  <EditIcon />
-                                </IconButton>
+                                  checked={vendorData.vendor.active || false}
+                                  onChange={() => handleToggleActivation(vendorData.vendor.email)}
+                                  color="primary"
+                                />
                               </Tooltip>
+
                             </Box>
                           </TableCell>
                         </TableRow>
@@ -832,50 +1040,72 @@ const AdminDashboard = () => {
       {activeTab === 1 && (
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <Card>
+            <Card sx={{
+              background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.1), rgba(121, 121, 121, 0.05))',
+              border: '1px solid rgba(25, 118, 210, 0.2)',
+              borderRadius: 2,
+            }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Buyers Overview
-                </Typography>
-                <TableContainer component={Paper}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" gutterBottom sx={{ color: '#fff' }}>
+                    Buyers Overview
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<FileDownloadIcon />}
+                    onClick={() => exportToCSV(buyers, 'buyer')}
+                    sx={{
+                      background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                      color: 'white'
+                    }}
+                  >
+                    Export CSV
+                  </Button>
+                </Box>
+                <TableContainer component={Paper} sx={{
+                  borderRadius: 2, boxShadow: 3,
+                  background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.1), rgba(121, 121, 121, 0.05))',
+                  border: '1px solid rgba(25, 118, 210, 0.2)',
+                  borderRadius: 2,
+                }}>
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>Company Name</TableCell>
-                        <TableCell>Contact Person</TableCell>
-                        <TableCell>Email</TableCell>
-                        <TableCell>Company Size</TableCell>
-                        <TableCell>Matched Vendors</TableCell>
-                        <TableCell>Actions</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Company Name</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Contact Person</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Email</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Company Size</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Matched Vendors</TableCell>
+                        <TableCell sx={{ color: '#fff' }}>Actions</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {buyers.map((buyerData) => (
-                        <TableRow key={buyerData._id}>
-                          <TableCell>{buyerData.companyName || 'N/A'}</TableCell>
-                          <TableCell>
-                            {`${buyerData.firstName || ''} ${buyerData.lastName || ''}`.trim() || 'N/A'}
+                      {filterData(buyers, 'buyer').map((buyerData) => (
+                        <TableRow key={buyerData.buyer._id}>
+                          <TableCell sx={{ color: '#fff' }}>{buyerData.buyer.companyName}</TableCell>
+                          <TableCell sx={{ color: '#fff' }}>
+                            {`${buyerData.buyer.firstName} ${buyerData.buyer.lastName}`}
                           </TableCell>
-                          <TableCell>{buyerData.email || 'N/A'}</TableCell>
-                          <TableCell>{buyerData.companySize || 'N/A'}</TableCell>
-                          <TableCell>{(buyerData.matchedVendors || []).length}</TableCell>
-                          <TableCell>
+                          <TableCell sx={{ color: '#fff' }}>{buyerData.buyer.email}</TableCell>
+                          <TableCell sx={{ color: '#fff' }}>{buyerData.buyer.companySize}</TableCell>
+                          <TableCell sx={{ color: '#fff' }}>{buyerData.matchedVendors.length}</TableCell>
+                          <TableCell sx={{ color: '#fff' }}>
                             <Box sx={{ display: 'flex', gap: 1 }}>
                               <Tooltip title="View Details">
                                 <IconButton
                                   size="small"
                                   onClick={() => handleBuyerDialog('buyer', buyerData)}
                                 >
-                                  <VisibilityIcon />
+                                  <VisibilityIcon sx={{ color: '#fff' }} />
                                 </IconButton>
                               </Tooltip>
-                              <Tooltip title="Edit Buyer">
-                                <IconButton
+                              <Tooltip title="Toggle Activation">
+                                <Switch
                                   size="small"
-                                  onClick={() => window.location.href = `/buyer-form/${buyerData.email}`}
-                                >
-                                  <EditIcon />
-                                </IconButton>
+                                  checked={buyerData.buyer.active || false}
+                                  onChange={() => handleToggleActivation(buyerData.buyer.email)}
+                                  color="primary"
+                                />
                               </Tooltip>
                             </Box>
                           </TableCell>
