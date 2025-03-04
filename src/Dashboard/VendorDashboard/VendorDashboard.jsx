@@ -24,6 +24,7 @@ import {
 import { Check as CheckIcon, Close as CloseIcon, Business as BusinessIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
 import axios from 'axios';
 
+import { useNavigate } from "react-router-dom";
 const VendorDashboard = () => {
   const theme = useTheme();
   const [vendorData, setVendorData] = useState(null);
@@ -38,6 +39,13 @@ const VendorDashboard = () => {
     industry: '',
     service: ''
   });
+  const navigate = useNavigate();
+    useEffect(() => {
+    const role = localStorage.getItem("role");
+    if (role !== 'vendor'){
+      navigate("/login");
+    }
+  }, [navigate]);
 
   useEffect(() => {
     fetchVendorData();
