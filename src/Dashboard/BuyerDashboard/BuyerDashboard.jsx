@@ -52,6 +52,7 @@ const BuyerDashboard = () => {
     if (role !== 'buyer') {
       navigate("/login");
     }
+  }, [navigate]);
   const [allServicesDialogOpen, setAllServicesDialogOpen] = useState(false);
   const [services, setServices] = useState([]);
   const [newService, setNewService] = useState({
