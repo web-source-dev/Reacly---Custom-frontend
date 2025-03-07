@@ -5,33 +5,33 @@ import {
   TextField,
   Button,
   Box,
-  Link,
   Alert,
   InputAdornment,
   IconButton,
   CircularProgress,
-  Paper,
-  useTheme
+  Paper
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Visibility, 
   VisibilityOff, 
-  Email, 
-  Lock 
+  Lock,
+  LockReset
 } from '@mui/icons-material';
 
-const Login = () => {
-  const theme = useTheme();
+const ResetPassword = () => {
+  const { token } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -43,30 +43,24 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/login`, formData);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('role', response.data.role);
-      localStorage.setItem('userEmail',response.data.email)
-      
-      // Redirect based on user role
-      switch(response.data.role) {
-        case 'buyer':
-          navigate('/buyer-dashboard');
-          break;
-        case 'vendor':
-          navigate('/vendor-dashboard');
-          break;
-        case 'admin':
-          navigate('/admin-dashboard');
-          break;
-        default:
-          navigate('/');
-      }
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/reset-password/${token}`, {
+        password: formData.password
+      });
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred during login');
+      setError(err.response?.data?.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
@@ -103,7 +97,7 @@ const Login = () => {
             WebkitTextFillColor: 'transparent'
           }}
         >
-          Welcome Back
+          Set New Password
         </Typography>
 
         {error && (
@@ -120,6 +114,20 @@ const Login = () => {
           </Alert>
         )}
 
+        {success && (
+          <Alert 
+            severity="success" 
+            sx={{ 
+              width: '100%', 
+              mb: 2,
+              borderRadius: 2,
+              animation: 'fadeIn 0.5s ease-in'
+            }}
+          >
+            Password reset successful! Redirecting to login...
+          </Alert>
+        )}
+
         <Box 
           component="form" 
           onSubmit={handleSubmit} 
@@ -132,17 +140,27 @@ const Login = () => {
           <TextField
             required
             fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
-            autoComplete="email"
-            autoFocus
-            value={formData.email}
+            name="password"
+            label="New Password"
+            type={showPassword ? 'text' : 'password'}
+            id="password"
+            value={formData.password}
             onChange={handleChange}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Email sx={{ color: 'var(--text-color)' }} />
+                  <Lock sx={{ color: 'var(--text-color)' }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                    sx={{ color: 'var(--text-color)' }}
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
                 </InputAdornment>
               ),
             }}
@@ -173,27 +191,26 @@ const Login = () => {
           <TextField
             required
             fullWidth
-            name="password"
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            id="password"
-            autoComplete="current-password"
-            value={formData.password}
+            name="confirmPassword"
+            label="Confirm New Password"
+            type={showConfirmPassword ? 'text' : 'password'}
+            id="confirmPassword"
+            value={formData.confirmPassword}
             onChange={handleChange}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Lock sx={{ color: 'var(--text-color)' }} />
+                  <LockReset sx={{ color: 'var(--text-color)' }} />
                 </InputAdornment>
               ),
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    onClick={() => setShowPassword(!showPassword)}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     edge="end"
                     sx={{ color: 'var(--text-color)' }}
                   >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                   </IconButton>
                 </InputAdornment>
               ),
@@ -247,53 +264,14 @@ const Login = () => {
             {loading ? (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <CircularProgress size={24} sx={{ color: 'white', mr: 1 }} />
-                Signing in...
+                Updating Password...
               </Box>
-            ) : 'Sign In'}
+            ) : 'Update Password'}
           </Button>
-          <Box 
-            sx={{ 
-              textAlign: 'center', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: 1.5 
-            }}
-          >
-            <Link
-              href="/signup"
-              variant="body2"
-              sx={{
-                color: "#4998F8",
-                textDecoration: 'none',
-                fontWeight: 500,
-                transition: 'color 0.2s ease-in-out',
-                '&:hover': {
-                  color: "#3878c8"
-                }
-              }}
-            >
-              {"Don't have an account? Sign Up"}
-            </Link>
-            <Link
-              href="/forgot-password"
-              variant="body2"
-              sx={{
-                color: "#4998F8",
-                textDecoration: 'none',
-                fontWeight: 500,
-                transition: 'color 0.2s ease-in-out',
-                '&:hover': {
-                  color: "#3878c8"
-                }
-              }}
-            >
-              {"Forgot password?"}
-            </Link>
-          </Box>
         </Box>
       </Paper>
     </Container>
   );
 };
 
-export default Login;
+export default ResetPassword;

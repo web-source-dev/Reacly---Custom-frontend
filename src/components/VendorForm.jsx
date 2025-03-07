@@ -13,15 +13,40 @@ import {
   Box,
   Checkbox,
   FormControlLabel,
+  Paper,
+  InputAdornment,
+  Alert,
+  Grid
 } from "@mui/material";
+import {
+  Business,
+  Person,
+  Email,
+  Phone,
+  Language,
+  AttachMoney,
+  Category,
+  Description,
+  Add as AddIcon,
+  Close as CloseIcon
+} from '@mui/icons-material';
 import axios from "axios"; // Import axios for HTTP requests
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import AddIcon from '@mui/icons-material/Add';
-import CloseIcon from '@mui/icons-material/Close';
 import { useParams } from "react-router-dom";
 
-const industries = ["Information Technology (IT)", "Financial Services", "Healthcare", "Education (EdTech)", "Retail & E-commerce","Marketing & Advertising","Human Resources (HRTech)","Manufacturing & Supply Chain","Real Estate","Professional Services"];
+const industries = [
+  "Information Technology (IT)",
+   "Financial Services",
+    "Healthcare",
+     "Education (EdTech)",
+      "Retail & E-commerce",
+      "Marketing & Advertising",
+      "Human Resources (HRTech)",
+      "Manufacturing & Supply Chain",
+      "Real Estate",
+      "Professional Services"
+    ];
 const services = [
 "Customer Relationship Management Solutions",
 "Marketing Automation Platforms",
@@ -221,330 +246,572 @@ export default function VendorRegistration() {
 
   return (
     <Container
-      maxWidth="sm"
-      sx={{
-        mt: 1,
-        p: 2,
-        backgroundColor: "var(--background-color)",
-        color: "var(--text-color)",
-        border: "1px solid var(--border-color)",
-        borderRadius: 4,
-        boxShadow: 3,
-      }}
-    >
-      <Typography
-        variant="h4"
-        gutterBottom
-        sx={{ color: "var(--text-color)", mb: 1, fontWeight: 'bold' }}
+    maxWidth={false} // Disable default maxWidth to use custom styles
+    sx={{
+      width: { xs: '100%', md: '700px' }, // 100% width on mobile, 500px on medium+ screens
+      maxWidth: '100%', // Ensures it doesn’t exceed the screen width
+      padding: { xs: '0px', md: '20px' },
+    }}
+  >
+      <Paper
+        elevation={6}
+        sx={{
+          mt: 4,
+          mb: 4,
+          p: 4,
+          backgroundColor: 'var(--background-color)',
+          borderRadius: 3,
+          transition: 'transform 0.2s ease-in-out',
+          '&:hover': {
+            transform: 'scale(1.01)',
+          },
+        }}
       >
-        Vendor Registration
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        gutterBottom
-        sx={{ color: "var(--text-color)", mb: 1 }}
-      >
-        Register your company as a service provider
-      </Typography>
-
-      <Box
-        component="form"
-        noValidate
-        autoComplete="off"
-        sx={{ mt: 1 }}
-        onSubmit={handleSubmit}
-      >
-        <TextField
-          fullWidth
-          label="Company Name"
-          name="companyName"
-          value={formData.companyName}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder="Enter your company name"
-          margin="normal"
-          variant="outlined"
-          error={!!errors.companyName}
-          helperText={errors.companyName}
-          InputLabelProps={{ style: { color: "var(--text-color)", fontSize: '14px' } }}
-          InputProps={{
-            style: {
-              color: "var(--text-color)",
-              border: "1px solid var(--border-color)",
-              height: 50,
-              borderRadius: 12,
-              fontSize: '14px' // Reduce placeholder size
-            },
-          }}
-        />
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-          <TextField
-            fullWidth
-            label="First Name"
-            name="firstName"
-            value={formData.firstName}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="Enter your first name"
-            margin="normal"
-            variant="outlined"
-            error={!!errors.firstName}
-            helperText={errors.firstName}
-            InputLabelProps={{ style: { color: "var(--text-color)", fontSize: '14px' } }}
-            InputProps={{
-              style: {
-                color: "var(--text-color)",
-                border: "1px solid var(--border-color)",
-                height: 50,
-                borderRadius: 12,
-                fontSize: '14px' // Reduce placeholder size
-              },
-            }}
-          />
-          <TextField
-            fullWidth
-            label="Last Name"
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder="Enter your last name"
-            margin="normal"
-            variant="outlined"
-            error={!!errors.lastName}
-            helperText={errors.lastName}
-            InputLabelProps={{ style: { color: "var(--text-color)", fontSize: '14px' } }}
-            InputProps={{
-              style: {
-                color: "var(--text-color)",
-                border: "1px solid var(--border-color)",
-                height: 50,
-                borderRadius: 12,
-                fontSize: '14px' // Reduce placeholder size
-              },
-            }}
-          />
-        </Box>
-        <TextField
-          fullWidth
-          label="Email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder="Enter your email address"
-          type="email"
-          margin="normal"
-          variant="outlined"
-          error={!!errors.email}
-          helperText={errors.email}
-          InputLabelProps={{ style: { color: "var(--text-color)", fontSize: '14px' } }}
-          InputProps={{
-            style: {
-              color: "var(--text-color)",
-              border: "1px solid var(--border-color)",
-              height: 50,
-              borderRadius: 12,
-              fontSize: '14px' // Reduce placeholder size
-            },
-          }}
-        />
-        <TextField
-          fullWidth
-          label="Phone Number"
-          name="phone"
-          value={formData.phone}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder="Enter your phone number"
-          type="tel"
-          margin="normal"
-          variant="outlined"
-          error={!!errors.phone}
-          helperText={errors.phone}
-          InputLabelProps={{ style: { color: "var(--text-color)", fontSize: '14px' } }}
-          InputProps={{
-            style: {
-              color: "var(--text-color)",
-              border: "1px solid var(--border-color)",
-              height: 50,
-              borderRadius: 12,
-              fontSize: '14px' // Reduce placeholder size
-            },
-          }}
-        />
-        <TextField
-          fullWidth
-          label="Company Website"
-          name="companyWebsite"
-          value={formData.companyWebsite}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder="https://example.com"
-          margin="normal"
-          variant="outlined"
-          error={!!errors.companyWebsite}
-          helperText={errors.companyWebsite}
-          InputLabelProps={{ style: { color: "var(--text-color)", fontSize: '14px' } }}
-          InputProps={{
-            style: {
-              color: "var(--text-color)",
-              border: "1px solid var(--border-color)",
-              height: 50,
-              borderRadius: 12,
-              fontSize: '14px' // Reduce placeholder size
-            },
-          }}
-        />
-        <FormControl fullWidth margin="normal" variant="outlined" error={!!errors.minimumBudget}>
-          <select
-            name="minimumBudget"
-            value={formData.minimumBudget}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            style={{
-              color: "var(--text-color)",
-              border: "1px solid var(--border-color)",
-              backgroundColor: "var(--background-color)",
-              height: 50,
-              borderRadius: 12,
-              fontSize: '14px',
-              width: '100%',
-              padding: '0 12px'
-            }}
-          >
-            <option style={{ backgroundColor: "var(--background-color)", color: "white" }} value="" disabled>Minimum Budget</option>
-            <option style={{ backgroundColor: "var(--background-color)", color: "white" }} value="10000">$5,000+</option>
-            <option style={{ backgroundColor: "var(--background-color)", color: "white" }} value="10000">$10,000+</option>
-            <option style={{ backgroundColor: "var(--background-color)", color: "white" }} value="25000">$25,000+</option>
-            <option style={{ backgroundColor: "var(--background-color)", color: "white" }} value="50000">$50,000+</option>
-            <option style={{ backgroundColor: "var(--background-color)", color: "white" }} value="100000">$100,000+</option>
-          </select>
-        </FormControl>
-
-        {/* Industries Multi-Select */}
-        <InputLabel style={{ color: "var(--text-color)", fontSize: '14px', fontWeight: 'bold', mt: 2 }}>Select Your Industries</InputLabel>
-        <FormControl fullWidth margin="normal">
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {industries.map((industry) => (
-              <Chip
-                key={industry}
-                label={industry}
-                onClick={() => toggleSelection('selectedIndustries', industry)}
-                icon={formData.selectedIndustries.includes(industry) ? <CloseIcon /> : <AddIcon />}
-                style={{
-                  backgroundColor: formData.selectedIndustries.includes(industry) ? "white" : "var(--background-color)",
-                  color: formData.selectedIndustries.includes(industry) ? "black" : "var(--text-color)",
-                  border: "1px solid var(--border-color)",
-                  borderRadius: 20,
-                  cursor: 'pointer',
-                  padding: '0 8px',
-                  fontSize: '12px',
-                  height: 25,
-                }}
-              />
-            ))}
-          </Box>
-        </FormControl>
-
-        {/* Services Multi-Select */}
-        <InputLabel style={{ color: "var(--text-color)", fontSize: '14px', fontWeight: 'bold', mt: 2 }}>Services You Provide</InputLabel>
-        <FormControl fullWidth margin="normal">
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {services.map((service) => (
-              <Chip
-                key={service}
-                label={service}
-                onClick={() => toggleSelection('selectedServices', service)}
-                icon={formData.selectedServices.includes(service) ? <CloseIcon /> : <AddIcon />}
-                style={{
-                  backgroundColor: formData.selectedServices.includes(service) ? "white" : "var(--background-color)",
-                  color: formData.selectedServices.includes(service) ? "black" : "var(--text-color)",
-                  border: "1px solid var(--border-color)",
-                  borderRadius: 20,
-                  cursor: 'pointer',
-                  padding: '0 8px',
-                  fontSize: '12px',
-                  height: 25,
-                }}
-              />
-            ))}
-          </Box>
-        </FormControl>
-
-        <TextField
-          fullWidth
-          label="Additional Information"
-          name="additionalInfo"
-          value={formData.additionalInfo}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder="Provide additional details about your company or services"
-          margin="normal"
-          multiline
-          rows={4}
-          variant="outlined"
-          error={!!errors.additionalInfo}
-          helperText={errors.additionalInfo}
-          InputLabelProps={{ style: { color: "var(--text-color)", fontSize: '14px' } }}
-          InputProps={{
-            style: {
-              color: "var(--text-color)",
-              border: "1px solid var(--border-color)",
-              borderRadius: 12,
-              fontSize: '14px' // Reduce placeholder size
-            },
-          }}
-        />
-
-        {/* Agree to Terms */}
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={formData.agreeToTerms}
-              onChange={handleCheckboxChange}
-              name="agreeToTerms"
-              style={{ color: "var(--text-color)" }}
-            />
-          }
-          label={
-            <Typography style={{ color: "var(--text-color)" }}>
-              I agree to the terms and conditions
-            </Typography>
-          }
-        />
         <Typography
-  variant="body2"
-  color="var(--text-color)"
-  style={{ marginTop: '8px', fontSize: '14px' }}
->
-  By checking this box, you agree to our{" "}
-  <a href="https://www.reachly.ca/terms-and-conditions" target="_blank" style={{ color: "var(--button-background-color)" }}>
-    terms and conditions
-  </a>.
-</Typography>
-
-        {/* Submit Button */}
-        <Button
-          fullWidth
-          variant="contained"
-          type="submit"
+          variant="h4"
           sx={{
-            mt: 4,
-            backgroundColor: loading ? "4998F8c3" : "var(--button-background-color)",
-            color: loading ? "white" : "var(--button-text-color)",
-            height: 50,
-            borderRadius: 2,
-            border: "1px solid var(--border-color)",
+            color: 'var(--text-color)',
+            fontWeight: 600,
+            mb: 2,
+            background: 'linear-gradient(45deg, #4998F8 30%, #3878c8 90%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
           }}
         >
-          {loading ? "Submitting..." : "Register"}
-        </Button>
-        {/* error color red */}
-        {error && <Box sx={{ mt: 2, color: 'red' }}>{error}</Box>}
-        {/* success color green */}
-        {success && <Box sx={{ mt: 2, color: 'green' }}>{success}</Box>}
-      </Box>
+          Vendor Registration
+        </Typography>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            color: 'var(--text-color)',
+            mb: 4,
+            opacity: 0.8
+          }}
+        >
+          Register your company as a service provider
+        </Typography>
+
+
+        <Box component="form" onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            label="Company Name"
+            name="companyName"
+            value={formData.companyName}
+            onChange={handleChange}
+            required
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Business sx={{ color: 'var(--text-color)' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                '& fieldset': {
+                  borderColor: 'var(--border-color)',
+                  transition: 'border-color 0.2s ease-in-out',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#4998F8',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#4998F8',
+                  borderWidth: '2px',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: 'var(--text-color)',
+              },
+              '& .MuiOutlinedInput-input': {
+                color: 'var(--text-color)',
+              },
+            }}
+          />
+
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="First Name"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Person sx={{ color: 'var(--text-color)' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    '& fieldset': {
+                      borderColor: 'var(--border-color)',
+                      transition: 'border-color 0.2s ease-in-out',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#4998F8',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#4998F8',
+                      borderWidth: '2px',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'var(--text-color)',
+                  },
+                  '& .MuiOutlinedInput-input': {
+                    color: 'var(--text-color)',
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Last Name"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Person sx={{ color: 'var(--text-color)' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    '& fieldset': {
+                      borderColor: 'var(--border-color)',
+                      transition: 'border-color 0.2s ease-in-out',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#4998F8',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#4998F8',
+                      borderWidth: '2px',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'var(--text-color)',
+                  },
+                  '& .MuiOutlinedInput-input': {
+                    color: 'var(--text-color)',
+                  },
+                }}
+              />
+            </Grid>
+          </Grid>
+
+          <TextField
+            fullWidth
+            label="Email Address"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Email sx={{ color: '#fff' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              mt: 3,
+              mb: 3,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                '& fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  transition: 'border-color 0.2s ease-in-out',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#4998F8',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#4998F8',
+                  borderWidth: '2px',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#fff',
+                '&.Mui-focused': {
+                  color: '#4998F8',
+                },
+              },
+              '& .MuiOutlinedInput-input': {
+                color: '#fff',
+              },
+            }}
+          />
+
+          <TextField
+            fullWidth
+            label="Phone Number"
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleChange}
+            required
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Phone sx={{ color: '#fff' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              mb: 3,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                '& fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  transition: 'border-color 0.2s ease-in-out',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#4998F8',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#4998F8',
+                  borderWidth: '2px',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#fff',
+                '&.Mui-focused': {
+                  color: '#4998F8',
+                },
+              },
+              '& .MuiOutlinedInput-input': {
+                color: '#fff',
+              },
+            }}
+          />
+
+          <TextField
+            fullWidth
+            label="Company Website"
+            name="companyWebsite"
+            value={formData.companyWebsite}
+            onChange={handleChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Language sx={{ color: '#fff' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              mb: 3,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                '& fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  transition: 'border-color 0.2s ease-in-out',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#4998F8',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#4998F8',
+                  borderWidth: '2px',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#fff',
+                '&.Mui-focused': {
+                  color: '#4998F8',
+                },
+              },
+              '& .MuiOutlinedInput-input': {
+                color: '#fff',
+              },
+            }}
+          />
+
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <TextField
+              select
+              label="Minimum Budget"
+              name="minimumBudget"
+              value={formData.minimumBudget}
+              onChange={handleChange}
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <AttachMoney sx={{ color: '#fff' }} />
+                  </InputAdornment>
+                ),
+              }}
+              SelectProps={{
+                native: true,
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  '& fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                    transition: 'border-color 0.2s ease-in-out',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#4998F8',
+                  },
+                  '& .MuiOutlinedInput-input': {
+                    color: 'rgb(141, 141, 141)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#4998F8',
+                    borderWidth: '2px',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#fff',
+                  '&.Mui-focused': {
+                    color: '#4998F8',
+                  },
+                },
+                '& .MuiSelect-select': {
+                  color: 'rgb(141, 141, 141)',
+                },
+                '& .MuiSelect-icon': {
+                  color: '#fff',
+                },
+              }}
+            >
+              <option value="">Select minimum budget</option>
+              {["$5,000+", "$10,000+", "$25,000+", "$50,000+", "$100,000+"].map((budget) => (
+                <option key={budget} value={budget}>{budget}</option>
+              ))}
+            </TextField>
+          </FormControl>
+
+          <Box>
+            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
+              Industries
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap',mt: 1, gap: 0.7 }}>
+              {industries.map((industry) => (
+                <Chip
+                  key={industry}
+                  label={industry}
+                  onClick={() => toggleSelection('selectedIndustries', industry)}
+                  icon={formData.selectedIndustries.includes(industry) ? <CloseIcon /> : <AddIcon />}
+                  sx={{
+                    backgroundColor: formData.selectedIndustries.includes(industry) 
+                      ? 'rgba(73, 152, 248, 0.2)' 
+                      : 'rgba(255, 255, 255, 0.05)',
+                    color: '#fff',
+                    border: '1px solid',
+                    borderColor: formData.selectedIndustries.includes(industry) 
+                      ? '#4998F8' 
+                      : 'rgba(255, 255, 255, 0.3)',
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      backgroundColor: 'rgba(73, 152, 248, 0.1)',
+                      borderColor: '#4998F8',
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+
+          <Box mt={2} mb={2}>
+            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
+              Services
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap',mt: 1, gap: 0.7 }}>
+              {services.map((service) => (
+                <Chip
+                  key={service}
+                  label={service}
+                  onClick={() => toggleSelection('selectedServices', service)}
+                  icon={formData.selectedServices.includes(service) ? <CloseIcon /> : <AddIcon />}
+                  sx={{
+                    backgroundColor: formData.selectedServices.includes(service) 
+                      ? 'rgba(73, 152, 248, 0.2)' 
+                      : 'rgba(255, 255, 255, 0.05)',
+                    color: '#fff',
+                    border: '1px solid',
+                    borderColor: formData.selectedServices.includes(service) 
+                      ? '#4998F8' 
+                      : 'rgba(255, 255, 255, 0.3)',
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      backgroundColor: 'rgba(73, 152, 248, 0.1)',
+                      borderColor: '#4998F8',
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+
+          <TextField
+            fullWidth
+            label="Additional Information"
+            name="additionalInfo"
+            value={formData.additionalInfo}
+            onChange={handleChange}
+            multiline
+            rows={4}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1.5 }}>
+                  <Description sx={{ color: '#fff' }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              mt: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                '& fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                  transition: 'border-color 0.2s ease-in-out',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#4998F8',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#4998F8',
+                  borderWidth: '2px',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#fff',
+                '&.Mui-focused': {
+                  color: '#4998F8',
+                },
+              },
+              '& .MuiOutlinedInput-input': {
+                color: '#fff',
+              },
+            }}
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={formData.agreeToTerms}
+                onChange={handleCheckboxChange}
+                name="agreeToTerms"
+                sx={{
+                  color: 'var(--text-color)',
+                  '&.Mui-checked': {
+                    color: '#4998F8',
+                  },
+                }}
+              />
+            }
+            label={
+              <Typography sx={{ color: 'var(--text-color)' }}>
+                I agree to the terms and conditions
+              </Typography>
+            }
+            sx={{ mt: 2 }}
+          />
+
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'var(--text-color)',
+              opacity: 0.8,
+              mt: 1,
+              '& a': {
+                color: '#4998F8',
+                textDecoration: 'none',
+                '&:hover': {
+                  textDecoration: 'underline',
+                },
+              },
+            }}
+          >
+            By checking this box, you agree to our{" "}
+            <a href="https://www.reachly.ca/terms-and-conditions" target="_blank">
+              terms and conditions
+            </a>
+            .
+          </Typography>
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            disabled={loading}
+            sx={{
+              mt: 4,
+              py: 1.5,
+              borderRadius: 2,
+              fontSize: '1rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              background: 'linear-gradient(45deg, #4998F8 30%, #3878c8 90%)',
+              boxShadow: '0 3px 5px 2px rgba(73, 152, 248, .3)',
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 6px 10px 4px rgba(73, 152, 248, .3)',
+              },
+              '&:disabled': {
+                background: 'linear-gradient(45deg, #4998F8c3 30%, #3878c8c3 90%)',
+              }
+            }}
+          >
+            {loading ? "Submitting..." : "Register"}
+          </Button>
+        </Box>
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              width: '96%',
+              mt: 2,
+              borderRadius: 2,
+            }}
+          >
+            {error}
+          </Alert>
+        )}
+
+        {success && (
+          <Alert 
+            severity="success" 
+            sx={{ 
+                width: '96%', 
+              mt: 2,
+              borderRadius: 2,
+            }}
+          >
+            {success}
+          </Alert>
+        )}
+
+      </Paper>
     </Container>
   );
 }

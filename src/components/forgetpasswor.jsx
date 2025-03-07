@@ -5,68 +5,33 @@ import {
   TextField,
   Button,
   Box,
-  Link,
   Alert,
-  InputAdornment,
-  IconButton,
   CircularProgress,
   Paper,
-  useTheme
+  Link,
+  InputAdornment
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  Visibility, 
-  VisibilityOff, 
-  Email, 
-  Lock 
-} from '@mui/icons-material';
+import { Email } from '@mui/icons-material';
 
-const Login = () => {
-  const theme = useTheme();
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+const ForgetPassword = () => {
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
+  const navigate = useNavigate();
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setMessage('');
     setLoading(true);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/login`, formData);
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('role', response.data.role);
-      localStorage.setItem('userEmail',response.data.email)
-      
-      // Redirect based on user role
-      switch(response.data.role) {
-        case 'buyer':
-          navigate('/buyer-dashboard');
-          break;
-        case 'vendor':
-          navigate('/vendor-dashboard');
-          break;
-        case 'admin':
-          navigate('/admin-dashboard');
-          break;
-        default:
-          navigate('/');
-      }
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/auth/forgot-password`, { email });
+      setMessage(response.data.message);
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred during login');
+      setError(err.response?.data?.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
@@ -103,7 +68,7 @@ const Login = () => {
             WebkitTextFillColor: 'transparent'
           }}
         >
-          Welcome Back
+          Reset Password
         </Typography>
 
         {error && (
@@ -117,6 +82,20 @@ const Login = () => {
             }}
           >
             {error}
+          </Alert>
+        )}
+
+        {message && (
+          <Alert 
+            severity="success" 
+            sx={{ 
+              width: '100%', 
+              mb: 2,
+              borderRadius: 2,
+              animation: 'fadeIn 0.5s ease-in'
+            }}
+          >
+            {message}
           </Alert>
         )}
 
@@ -137,64 +116,12 @@ const Login = () => {
             name="email"
             autoComplete="email"
             autoFocus
-            value={formData.email}
-            onChange={handleChange}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
                   <Email sx={{ color: 'var(--text-color)' }} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                '& fieldset': {
-                  borderColor: 'var(--border-color)',
-                  transition: 'border-color 0.2s ease-in-out',
-                },
-                '&:hover fieldset': {
-                  borderColor: '#4998F8',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#4998F8',
-                  borderWidth: '2px',
-                },
-              },
-              '& .MuiInputLabel-root': {
-                color: 'var(--text-color)',
-              },
-              '& .MuiOutlinedInput-input': {
-                color: 'var(--text-color)',
-              },
-            }}
-          />
-          <TextField
-            required
-            fullWidth
-            name="password"
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            id="password"
-            autoComplete="current-password"
-            value={formData.password}
-            onChange={handleChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Lock sx={{ color: 'var(--text-color)' }} />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowPassword(!showPassword)}
-                    edge="end"
-                    sx={{ color: 'var(--text-color)' }}
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
                 </InputAdornment>
               ),
             }}
@@ -247,20 +174,13 @@ const Login = () => {
             {loading ? (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <CircularProgress size={24} sx={{ color: 'white', mr: 1 }} />
-                Signing in...
+                Sending Reset Link...
               </Box>
-            ) : 'Sign In'}
+            ) : 'Send Reset Link'}
           </Button>
-          <Box 
-            sx={{ 
-              textAlign: 'center', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              gap: 1.5 
-            }}
-          >
+          <Box sx={{ textAlign: 'center' }}>
             <Link
-              href="/signup"
+              href="/login"
               variant="body2"
               sx={{
                 color: "#4998F8",
@@ -272,22 +192,7 @@ const Login = () => {
                 }
               }}
             >
-              {"Don't have an account? Sign Up"}
-            </Link>
-            <Link
-              href="/forgot-password"
-              variant="body2"
-              sx={{
-                color: "#4998F8",
-                textDecoration: 'none',
-                fontWeight: 500,
-                transition: 'color 0.2s ease-in-out',
-                '&:hover': {
-                  color: "#3878c8"
-                }
-              }}
-            >
-              {"Forgot password?"}
+              Remember Password? Login Here
             </Link>
           </Box>
         </Box>
@@ -296,4 +201,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default ForgetPassword;

@@ -22,15 +22,91 @@ import {
   FormControl,
   InputLabel,
   Select,
+  CircularProgress,
+  DialogContentText,
 } from '@mui/material';
 import BusinessIcon from '@mui/icons-material/Business';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import SearchOffIcon from '@mui/icons-material/SearchOff';
 
 import axios from 'axios';
-import {useNavigate} from 'react-router-dom'
+
+const EmptyState = ({ message }) => {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 4,
+        width: '100%',
+        minHeight: 300,
+        background: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: 2,
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)'
+      }}
+    >
+      <SearchOffIcon sx={{ fontSize: 60, color: '#4998F8', mb: 2 }} />
+      <Typography
+        variant="h5"
+        sx={{
+          color: '#fff',
+          mb: 1,
+          fontWeight: 600,
+          textAlign: 'center'
+        }}
+      >
+        No Matched Vendors Found
+      </Typography>
+      <Typography
+        variant="body1"
+        sx={{
+          color: 'rgba(255, 255, 255, 0.7)',
+          textAlign: 'center'
+        }}
+      >
+        {message}
+      </Typography>
+    </Box>
+  );
+};
+
+const ExportDialog = ({ open, onClose }) => (
+  <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth 
+    sx={{ backgroundColor: 'rgba(0, 0, 0, 0.18)' }}>
+    <Box sx={{ backgroundColor: '#000', color: '#fff', padding: 2 }}>
+      <DialogTitle sx={{ color: '#fff', fontWeight: 'bold' }}>
+        No Data Available
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText sx={{ color: '#fff', mt: 2 }}>
+          There is no data available to export at this time. Please make sure you have matched vendors before attempting to export.
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button 
+          onClick={onClose}
+          variant="contained"
+          sx={{ 
+            backgroundColor: '#4998F8', 
+            color: '#fff',
+            borderRadius: 10,
+            '&:hover': { 
+              backgroundColor: '#3d7ac7' 
+            }
+          }}
+        >
+          Close
+        </Button>
+      </DialogActions>
+    </Box>
+  </Dialog>
+);
 
 const BuyerDashboard = () => {
   const theme = useTheme();
@@ -46,13 +122,6 @@ const BuyerDashboard = () => {
     budget: '',
     isActive: true
   });
-    const navigate = useNavigate()
-  useEffect(() => {
-    const role = localStorage.getItem("role");
-    if (role !== 'buyer') {
-      navigate("/login");
-    }
-  }, [navigate]);
   const [allServicesDialogOpen, setAllServicesDialogOpen] = useState(false);
   const [services, setServices] = useState([]);
   const [newService, setNewService] = useState({
@@ -66,12 +135,55 @@ const BuyerDashboard = () => {
     industry: '',
     service: ''
   });
+  const [actionLoading, setActionLoading] = useState({
+    serviceToggle: {},
+    editService: false,
+    updateAllServices: false
+  });
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
+  const serviceOptions = [
+    "Customer Relationship Management Solutions",
+"Marketing Automation Platforms",
+"Sales Enablement Tools",
+"Financial Planning and Analysis Services",
+"Accounting and Bookkeeping Services",
+"Payroll Processing Services",
+"Recruitment and Talent Acquisition Services",
+"Project Management Tools",
+"Supply Chain Management Solutions",
+"Logistics and Transportation Services",
+"E-commerce Platforms",
+"Business Intelligence and Analytics Tools",
+"Enterprise Resource Planning (ERP) Systems",
+"Open-Source Intelligence (OSINT) Services",
+"Physical Security and Surveillance Systems",
+"Access Control Solutions",
+"Cybersecurity Services",
+'Cloud Computing Services',
+"Payment Processing Solutions",
+"Manufacturing Automation Solutions"
+  ];
+
+  const timeframeOptions = [
+    "1-2 weeks",
+    "1 month",
+    "3 months"
+  ];
+
+  const budgetOptions = [
+   "$5,000+",
+    "$10,000+",
+    "$25,000+",
+    "$50,000+",
+    "$100,000+"
+  ];
   useEffect(() => {
     fetchBuyerData();
   }, []);
 
   const handleServiceToggle = async (serviceId, currentStatus) => {
+    setActionLoading(prev => ({ ...prev, serviceToggle: { ...prev.serviceToggle, [serviceId]: true } }));
     try {
       const email = localStorage.getItem('userEmail');
       await axios.patch(`${process.env.REACT_APP_BACKEND_URL}/lead/buyer/${email}/services/${serviceId}`, {
@@ -81,6 +193,8 @@ const BuyerDashboard = () => {
     } catch (error) {
       console.error('Error toggling service:', error);
       setError('Error updating service status');
+    } finally {
+      setActionLoading(prev => ({ ...prev, serviceToggle: { ...prev.serviceToggle, [serviceId]: false } }));
     }
   };
 
@@ -139,8 +253,9 @@ const BuyerDashboard = () => {
     setServices(updatedServices);
   };
   const handleUpdateAllServices = async () => {
+    setActionLoading(prev => ({ ...prev, updateAllServices: true }));
     try {
-      const email = localStorage.getItem('userEmail'); // Ensure this is correctly stored
+      const email = localStorage.getItem('userEmail');
       await axios.put(`${process.env.REACT_APP_BACKEND_URL}/lead/buyer/services/email/${email}`, {
         services: services
       });
@@ -149,11 +264,14 @@ const BuyerDashboard = () => {
     } catch (error) {
       console.error('Error updating services:', error);
       setError('Error updating services');
+    } finally {
+      setActionLoading(prev => ({ ...prev, updateAllServices: false }));
     }
   };
   
 
   const handleEditFormSubmit = async () => {
+    setActionLoading(prev => ({ ...prev, editService: true }));
     try {
       const email = localStorage.getItem('userEmail');
       await axios.put(`${process.env.REACT_APP_BACKEND_URL}/lead/buyer/services/email/${email}/${editingService._id}`, editFormData);
@@ -162,6 +280,8 @@ const BuyerDashboard = () => {
     } catch (error) {
       console.error('Error updating service:', error);
       setError('Error updating service');
+    } finally {
+      setActionLoading(prev => ({ ...prev, editService: false }));
     }
   };
   
@@ -204,7 +324,14 @@ const BuyerDashboard = () => {
   };
 
   const exportToCSV = () => {
-    const csvData = filterVendors(matchedVendors).map(vendor => ({
+    const filteredVendors = filterVendors(matchedVendors);
+    
+    if (!filteredVendors || filteredVendors.length === 0) {
+      setExportDialogOpen(true);
+      return;
+    }
+
+    const csvData = filteredVendors.map(vendor => ({
       'Company Name': vendor.vendor.companyName,
       'Contact Person': `${vendor.vendor.firstName} ${vendor.vendor.lastName}`,
       'Email': vendor.vendor.email,
@@ -230,7 +357,7 @@ const BuyerDashboard = () => {
   const FilterControls = () => (
     <Box sx={{ mb: 3, p: 2, bgcolor: 'rgba(255, 255, 255, 0.05)', borderRadius: 2 }}>
       <Grid container spacing={2} alignItems="center">
-        <Grid item xs={12} md={4} sx={{ marginLeft: 'auto' }}>
+        <Grid item xs={12} md={4}>
           <FormControl fullWidth>
             <InputLabel sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>Month</InputLabel>
             <Select
@@ -253,11 +380,64 @@ const BuyerDashboard = () => {
             </Select>
           </FormControl>
         </Grid>
+        <Grid item xs={12} md={4}>
+          <Autocomplete
+            options={Array.from(new Set(matchedVendors.flatMap(v => v.vendor.selectedIndustries)))}
+            value={filters.industry}
+            onChange={(_, newValue) => setFilters(prev => ({ ...prev, industry: newValue }))}
+            renderInput={(params) => (
+              <TextField 
+                {...params} 
+                label="Filter by Industry"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#fff',
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                  },
+                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
+                }}
+              />
+            )}
+            disablePortal
+            blurOnSelect
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Autocomplete
+            options={Array.from(new Set(matchedVendors.flatMap(v => v.vendor.selectedServices)))}
+            value={filters.service}
+            onChange={(_, newValue) => setFilters(prev => ({ ...prev, service: newValue }))}
+            renderInput={(params) => (
+              <TextField 
+                {...params} 
+                label="Filter by Service"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: '#fff',
+                    '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.23)' },
+                  },
+                  '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
+                }}
+              />
+            )}
+            disablePortal
+            blurOnSelect
+          />
+        </Grid>
       </Grid>
     </Box>
   );
 
-  if (loading) return <Typography sx={{ color: '#fff' }}>Loading...</Typography>;
+  if (loading) return (
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: '100vh' 
+    }}>
+      <CircularProgress sx={{ color: '#4998F8' }} />
+    </Box>
+  );
   if (error) return <Typography color="error">{error}</Typography>;
   if (!buyerData) return <Typography sx={{ color: '#fff' }}>No buyer data found</Typography>;
 
@@ -322,9 +502,10 @@ const BuyerDashboard = () => {
                   startIcon={<EditIcon />}
                   onClick={handleAllServicesDialogOpen}
                   sx={{
-                    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                    borderRadius:10,
+                    background: '#4998F8',
                     '&:hover': {
-                      background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)'
+                      background: '#4998F8'
                     }
                   }}
                 >
@@ -401,6 +582,7 @@ const BuyerDashboard = () => {
             size="small"
             checked={service.active !== false}
             onChange={() => handleServiceToggle(service._id, service.active)}
+            disabled={actionLoading.serviceToggle[service._id]}
             sx={{
               "& .MuiSwitch-switchBase.Mui-checked": {
                 color: theme.palette.primary.main,
@@ -410,6 +592,9 @@ const BuyerDashboard = () => {
               },
             }}
           />
+          {actionLoading.serviceToggle[service._id] && (
+            <CircularProgress size={20} sx={{ ml: 1 }} />
+          )}
           <IconButton
             size="small"
             onClick={() => handleEditClick(service)}
@@ -444,7 +629,8 @@ const BuyerDashboard = () => {
                   startIcon={<FileDownloadIcon />}
                   onClick={exportToCSV}
                   sx={{
-                    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                    borderRadius:10,
+                    background: '#4998F8',
                     color: 'white'
                   }}
                 >
@@ -452,76 +638,86 @@ const BuyerDashboard = () => {
                 </Button>
               </Box>
               <FilterControls />
-              <Grid container spacing={3}>
-                {filterVendors(matchedVendors).map((matchData) => (
-                  <Grid item xs={12} md={6} lg={4} key={matchData.vendor._id}>
-                    <Card sx={{
-                      background: 'linear-gradient(to right bottom, rgba(26, 26, 26, 0.8), rgba(45, 45, 45, 0.8))',
-                      backdropFilter: 'blur(10px)',
-                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-                      borderRadius: 2,
-                      transition: 'transform 0.2s, box-shadow 0.2s',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)'
-                      }
-                    }}>
-                      <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <Avatar sx={{ 
-                            bgcolor: theme.palette.primary.main,
-                            width: 60,
-                            height: 60,
-                            mr: 2
+              {filterVendors(matchedVendors).length === 0 ? (
+                <EmptyState 
+                  message={
+                    matchedVendors.length === 0 
+                      ? "You don't have any matched vendors yet. We'll notify you when we find suitable matches for your requirements."
+                      : "No vendors match your current filter criteria. Try adjusting your filters."
+                  }
+                />
+              ) : (
+                <Grid container spacing={3}>
+                  {filterVendors(matchedVendors).map((matchData) => (
+                    <Grid item xs={12} md={6} lg={4} key={matchData.vendor._id}>
+                      <Card sx={{
+                        background: 'linear-gradient(to right bottom, rgba(26, 26, 26, 0.8), rgba(45, 45, 45, 0.8))',
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                        borderRadius: 2,
+                        transition: 'transform 0.2s, box-shadow 0.2s',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3)'
+                        }
+                      }}>
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                            <Avatar sx={{ 
+                              bgcolor: theme.palette.primary.main,
+                              width: 60,
+                              height: 60,
+                              mr: 2
+                            }}>
+                              <BusinessIcon sx={{ fontSize: 30 }} />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
+                                {matchData.vendor.companyName}
+                              </Typography>
+                              <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                                {`${matchData.vendor.firstName} ${matchData.vendor.lastName}`}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Box sx={{ 
+                            p: 2, 
+                            borderRadius: 1,
+                            bgcolor: 'rgba(255, 255, 255, 0.05)',
+                            mb: 2
                           }}>
-                            <BusinessIcon sx={{ fontSize: 30 }} />
-                          </Avatar>
+                            <Typography sx={{ color: '#fff', mb: 1 }}>
+                              <strong>Email:</strong> {matchData.vendor.email}
+                            </Typography>
+                            <Typography sx={{ color: '#fff', mb: 1 }}>
+                              <strong>Phone:</strong> {matchData.vendor.phone}
+                            </Typography>
+                          </Box>
+
                           <Box>
-                            <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
-                              {matchData.vendor.companyName}
-                            </Typography>
-                            <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                              {`${matchData.vendor.firstName} ${matchData.vendor.lastName}`}
-                            </Typography>
+                            <Typography sx={{ color: '#fff', fontWeight: 500, mb: 1 }}>Match Reasons</Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                              {matchData.matchReasons.map((reason, index) => (
+                                <Chip
+                                  key={index}
+                                  label={reason}
+                                  size="small"
+                                  sx={{
+                                    background: 'rgba(33, 150, 243, 0.2)',
+                                    color: '#fff',
+                                    '&:hover': { background: 'rgba(33, 150, 243, 0.3)' }
+                                  }}
+                                />
+                              ))}
+                            </Box>
                           </Box>
-                        </Box>
-
-                        <Box sx={{ 
-                          p: 2, 
-                          borderRadius: 1,
-                          bgcolor: 'rgba(255, 255, 255, 0.05)',
-                          mb: 2
-                        }}>
-                          <Typography sx={{ color: '#fff', mb: 1 }}>
-                            <strong>Email:</strong> {matchData.vendor.email}
-                          </Typography>
-                          <Typography sx={{ color: '#fff', mb: 1 }}>
-                            <strong>Phone:</strong> {matchData.vendor.phone}
-                          </Typography>
-                        </Box>
-
-                        <Box>
-                          <Typography sx={{ color: '#fff', fontWeight: 500, mb: 1 }}>Match Reasons</Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                            {matchData.matchReasons.map((reason, index) => (
-                              <Chip
-                                key={index}
-                                label={reason}
-                                size="small"
-                                sx={{
-                                  background: 'rgba(33, 150, 243, 0.2)',
-                                  color: '#fff',
-                                  '&:hover': { background: 'rgba(33, 150, 243, 0.3)' }
-                                }}
-                              />
-                            ))}
-                          </Box>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -545,7 +741,8 @@ const BuyerDashboard = () => {
             <Typography variant="h6" sx={{ color: '#fff', mb: 2 }}>Add New Service</Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={4}>
-                <TextField
+   <TextField
+                  select
                   fullWidth
                   label="Service"
                   value={newService.service}
@@ -558,9 +755,13 @@ const BuyerDashboard = () => {
                     },
                     '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
                   }}
-                />
+                >
+                  {serviceOptions.map((option) => (
+                    <MenuItem key={option} value={option}>{option}</MenuItem>
+                  ))}
+                </TextField>
               </Grid>
-              <Grid item xs={12} sm={3}>
+                            <Grid item xs={12} sm={3}>
                 <TextField
                   select
                   fullWidth
@@ -576,14 +777,14 @@ const BuyerDashboard = () => {
                     '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
                   }}
                 >
-                  <MenuItem value="Immediate">Immediate</MenuItem>
-                  <MenuItem value="1-3 months">1-3 months</MenuItem>
-                  <MenuItem value="3-6 months">3-6 months</MenuItem>
-                  <MenuItem value="6+ months">6+ months</MenuItem>
+                  {timeframeOptions.map((option) => (
+                    <MenuItem key={option} value={option}>{option}</MenuItem>
+                  ))}
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={3}>
                 <TextField
+                  select
                   fullWidth
                   label="Budget"
                   value={newService.budget}
@@ -596,7 +797,11 @@ const BuyerDashboard = () => {
                     },
                     '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
                   }}
-                />
+                >
+                  {budgetOptions.map((option) => (
+                    <MenuItem key={option} value={option}>{option}</MenuItem>
+                  ))}
+                </TextField>
               </Grid>
               <Grid item xs={12} sm={2}>
                 <Button
@@ -606,9 +811,10 @@ const BuyerDashboard = () => {
                   onClick={handleAddService}
                   sx={{
                     height: '56px',
-                    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                    borderRadius:10,
+                    background: '#4998F8',
                     '&:hover': {
-                      background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)'
+                      background: '#4998F8'
                     }
                   }}
                 >
@@ -656,14 +862,20 @@ const BuyerDashboard = () => {
           <Button
             onClick={handleUpdateAllServices}
             variant="contained"
+            disabled={actionLoading.updateAllServices}
             sx={{
-              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+              borderRadius: 10,
+              background: '#4998F8',
               '&:hover': {
-                background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)'
+                background: '#4998F8'
               }
             }}
           >
-            Save All Changes
+            {actionLoading.updateAllServices ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              'Save All Changes'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
@@ -679,8 +891,9 @@ const BuyerDashboard = () => {
         }}
       >
         <DialogTitle sx={{ color: '#fff' }}>Edit Service</DialogTitle>
-        <DialogContent>
+                <DialogContent>
           <TextField
+            select
             fullWidth
             label="Service"
             value={editFormData.service}
@@ -694,7 +907,11 @@ const BuyerDashboard = () => {
               },
               '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
             }}
-          />
+          >
+            {serviceOptions.map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
           <TextField
             select
             fullWidth
@@ -711,12 +928,12 @@ const BuyerDashboard = () => {
               '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
             }}
           >
-            <MenuItem value="Immediate">Immediate</MenuItem>
-            <MenuItem value="1-3 months">1-3 months</MenuItem>
-            <MenuItem value="3-6 months">3-6 months</MenuItem>
-            <MenuItem value="6+ months">6+ months</MenuItem>
+            {timeframeOptions.map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
           </TextField>
           <TextField
+            select
             fullWidth
             label="Budget"
             value={editFormData.budget}
@@ -730,7 +947,11 @@ const BuyerDashboard = () => {
               },
               '& .MuiInputLabel-root': { color: 'rgba(255, 255, 255, 0.7)' }
             }}
-          />
+          >
+            {budgetOptions.map((option) => (
+              <MenuItem key={option} value={option}>{option}</MenuItem>
+            ))}
+          </TextField>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button
@@ -745,17 +966,28 @@ const BuyerDashboard = () => {
           <Button
             onClick={handleEditFormSubmit}
             variant="contained"
+            disabled={actionLoading.editService}
             sx={{
-              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+              borderRadius: 10,
+              background: '#4998F8',
               '&:hover': {
-                background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)'
+                background: '#4998F8'
               }
             }}
           >
-            Save Changes
+            {actionLoading.editService ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              'Save Changes'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ExportDialog 
+        open={exportDialogOpen} 
+        onClose={() => setExportDialogOpen(false)} 
+      />
     </Container>
   );
 };
