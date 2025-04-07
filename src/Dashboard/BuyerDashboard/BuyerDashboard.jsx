@@ -166,9 +166,9 @@ const BuyerDashboard = () => {
   ];
 
   const timeframeOptions = [
-    "1-2 weeks",
-    "1 month",
-    "3 months"
+    "1-3 months",
+    "3-6 months",
+    "9+ months"
   ];
 
   const budgetOptions = [
