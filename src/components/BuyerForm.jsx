@@ -749,7 +749,7 @@ const BuyerForm = () => {
                       }}
                     >
                       <option value=""></option>
-                      {["1-3 months", "3-6 months", "9= months"].map((option) => (
+                      {["1-3 months", "3-6 months", "9+ months"].map((option) => (
                         <option key={option} value={option}>{option}</option>
                       ))}
                     </TextField>
